@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Library</title>
+    <link rel="stylesheet" href="LibraryStyle.css">
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="colResizable-1.6.min.js"></script>
+    <script src="colResizable-1.6.js"></script>
+</head>
+<body id = "pageBody">
+    <div>
+        <h1 style="display: inline">Library: </h1><h1 style="display: inline" id="libraryTitle"></h1>
+    </div>
+    <hr>
+        <div class="dropdown">
+            <span><h3>Settings</h3></span>
+            <div class="dropdown-content">
+                <p>Table Text Size: <input id="tableTextSize" type="number" style="width: 3em" value="12" /></p>
+                <p>Table Background Color: <input id="tableBackgroundColor" value="#ffffff" type="color" /></p>
+                <p>Table Hover Color: <input id="tableHoverColor" type="color" value="#dedede" /></p>
+                <p>Background Color: <input id="backgroundColor" type="color" value="#d6d6d6"/></p>
+                <p>
+                    Font:
+                    <select id="docFont" >
+                        <option>Arial</option>
+                        <option>Arial Black</option>
+                        <option>Book Antiqua</option>
+                        <option>Bookman</option>
+                        <option>Comic Sans MS</option>
+                        <option>Courier</option>
+                        <option>Courier New</option>
+                        <option>Garamond</option>
+                        <option>Georgia</option>
+                        <option>Helvetica</option>
+                        <option>Impact</option>
+                        <option>Lucida Console</option>
+                        <option>Lucida Sans Unicode</option>
+                        <option>Palatino</option>
+                        <option>Palatino Linotype</option>
+                        <option>Tahoma</option>
+                        <option>Times</option>
+                        <option>Times New Roman</option>
+                        <option>Trebuchet MS</option>
+                        <option>Verdana</option>
+                    </select>
+                </p>
+                <p>Hover Preview Mode: <input id="hooverBool" type="checkbox" value="hoover" /></p>
+            </div>
+        </div>
+        <hr>
+        <div>
+            <h3>Search PubMed</h3>
+
+            <!--<input type="text" id="SearchPubMed" size="100" onkeydown="getSearchPapers()" /><br />-->
+            <input type="text" size="100" id="SearchPubMed" /><br />
+
+            Max Search Size: <input type="text" id="maxSearchSize" value="30" size="2" />
+            <button id ="clearSearchTableButton">Clear</button><br />
+
+            Search Search: <input id="filterSearch" type="text" size="100" />
+            <input id="filterSearchRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterSearchByField" type="checkbox" /> By Field<br />
+            <p id="singleLineSearchResult" style="display: none">Some text here</p>
+            <table id="Search" width="100%" border="0" cellpadding="0">
+                <tr id="searchHeader">
+                    <th style="width: 2%;"></th>
+                    <th id="SearchPMID" style="width: 6%;">PMID</th>
+                    <th id="SearchAuthors" style="width: 15%;">Authors</th>
+                    <th id="SearchTitle" style="width: 25%;">Title</th>
+                    <th id="SearchJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="SearchYear" style="width: 5%;">Year</th>
+                    <th id="SearchVolume" style="width: 5%;">Volume</th>
+                    <th id="SearchIssue" style="width: 5%;">Issue</th>
+                    <th id="SearchPage" style="width: 8%;">Page</th>
+                    <th id="SearchMonth" style="width: 4%;">Month</th>
+                    <th id="SearchAbstract" style="width: 5%;">Abstract</th>
+                    <th id="SearchJournalFull" style="width: 5%;">Journal (Full)</th>
+                </tr>
+            </table>
+        </div>
+        <hr>
+        <div>
+            <h3>Library</h3>
+            Search Library: <input id="filterLibrary" type="text" size="100" />
+            <input id="filterLibraryRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterLibraryByField" type="checkbox" /> By Field <br />
+            <table id="Library" border="0" cellpadding="0">
+                <tr>
+                    <th style="width: 2%;"></th>
+                    <th id="LibraryPMID" style="width: 6%;">PMID</th>
+                    <th id="LibraryAuthors" style="width: 15%;">Authors</th>
+                    <th id="LibraryTitle" style="width: 25%;">Title</th>
+                    <th id="LibraryJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="LibraryYear" style="width: 5%;">Year</th>
+                    <th id="LibraryVolume" style="width: 5%;">Volume</th>
+                    <th id="LibraryIssue" style="width: 5%;">Issue</th>
+                    <th id="LibraryPage" style="width: 8%;">Page</th>
+                    <th id="LibraryMonth" style="width: 4%;">Month</th>
+                    <th id="LibraryAbstract" style="width: 5%;">Abstract</th>
+                    <th id="LibraryJournalFull" style="width: 5%;">Journal (Full)</th>
+                </tr>
+            </table>
+        </div>
+        <hr>
+        <div>
+            <h3>Recommendations</h3>
+            Max number of recommendations: <input type="text" id="maxRecSize" value="30" size="2" />
+            <button id="getRArticles">Get Articles</button>
+            <button id="getRReviews">Get Reviews</button>
+            <button id="clearRTable">Clear</button><br />
+            Search Recommendations: <input id="filterRecommendations" type="text" size="100" />
+            <input id="filterRecommendationsRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterRecommendationsByField" type="checkbox" /> By Field <br />
+
+            <table id="Recommendations" width="100%" border="0" cellpadding="0">
+                <tr>
+                    <th style="width: 2%;"></th>
+                    <th id="RecommendationsCount" style="width: 2%;">Count</th>
+                    <th id="RecommendationsPMID" style="width: 6%;">PMID</th>
+                    <th id="RecommendationsAuthors" style="width: 15%;">Authors</th>
+                    <th id="RecommendationsTitle" style="width: 20%;">Title</th>
+                    <th id="RecommendationsJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="RecommendationsYear" style="width: 5%;">Year</th>
+                    <th id="RecommendationsVolume" style="width: 5%;">Volume</th>
+                    <th id="RecommendationsIssue" style="width: 5%;">Issue</th>
+                    <th id="RecommendationsPage" style="width: 8%;">Page</th>
+                    <th id="RecommendationsMonth" style="width: 4%;">Month</th>
+                    <th id="RecommendationsAbstract" style="width: 4%;">Abstract</th>
+                    <th id="RecommendationsJournalFull" style="width: 4%;">Journal (Full)</th>
+                </tr>
+            </table>
+        </div>
+
+        <script src="LibraryPage.js"></script>
+        <script src="actionButtons.js"></script>
+</body>
+
+</html>

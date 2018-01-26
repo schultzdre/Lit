@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Lit</title>
+      <link rel="stylesheet" href="LibraryStyle.css">
+  </head>
+    <body id="popupBody">
+
+        <h3>Libraries</h3>
+
+        <ul id="libraryList"></ul>
+
+        <input type="text" id="newLibraryName" />
+        <button id="addLibraryButton" >Add</button>
+
+        <h3>Remove Paper From Library</h3>
+        <select id="removeOptions"></select>
+        <button id="remove">Remove</button>
+        <button id="edit">Edit</button>
+
+        <h3 id="setMenuTitle">Settings</h3>
+        <div id="setMenu" style="display: none">
+                <p>Table Text Size: <input id="tableTextSize" type="number" style="width: 3em" value="12" /></p>
+                <p>Table Background Color: <input id="tableBackgroundColor" value="#ffffff" type="color" /></p>
+                <p>Table Hover Color: <input id="tableHoverColor" type="color" value="#dedede" /></p>
+                <p>Background Color: <input id="backgroundColor" type="color" value="#d6d6d6" /></p>
+                <p>
+                    Font:
+                    <select id="docFont">
+                        <option>Arial</option>
+                        <option>Arial Black</option>
+                        <option>Book Antiqua</option>
+                        <option>Bookman</option>
+                        <option>Comic Sans MS</option>
+                        <option>Courier</option>
+                        <option>Courier New</option>
+                        <option>Garamond</option>
+                        <option>Georgia</option>
+                        <option>Helvetica</option>
+                        <option>Impact</option>
+                        <option>Lucida Console</option>
+                        <option>Lucida Sans Unicode</option>
+                        <option>Palatino</option>
+                        <option>Palatino Linotype</option>
+                        <option>Tahoma</option>
+                        <option>Times</option>
+                        <option>Times New Roman</option>
+                        <option>Trebuchet MS</option>
+                        <option>Verdana</option>
+                    </select>
+                </p>
+                <button id="restoreSettings">Restore Settings</button>
+            </div>
+
+        <script src="popup.js"></script>
+</body>
+</html>
