@@ -32,3 +32,31 @@ function addToList(node, vari, removeOPT, listID) {
     //Reset
     document.getElementById(node).value = "";
 }
+//RemoveFromList("removeAuthorOptions")
+function removeFromList(node) {
+    //Get the one to remove
+    var d = document.getElementById(node).value;
+    //Remove from saved list
+    chrome.storage.sync.get("libraries", function (item) {
+        var index = item.libraries.indexOf(curlib);
+        item.libraries.splice(index, 1);
+        chrome.storage.sync.set({ "libraries": item.libraries })
+    })
+    //Remove articles from that library from saved list
+    chrome.storage.sync.get("allArticles", function (item) {
+        var i = 0;
+        while (i < item.allArticles.length) {
+            ss = item.allArticles[i].split("%in%");
+            if (ss[0] === curlib) {
+                item.allArticles.splice(i, 1);
+            } else {
+                i++;
+            }
+        }
+        chrome.storage.sync.set({ "allArticles": item.allArticles })
+        console.log(item.allArticles)
+    })
+    //Remove nodes
+    document.getElementById(curlib).remove();
+    document.getElementById("OPT" + curlib).remove();
+}
