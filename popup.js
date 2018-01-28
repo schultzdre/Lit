@@ -203,5 +203,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("restoreSettings").addEventListener("click", restoreSettings);
 });
 
-
+//onload
 loadListOfLibraries()
+
+//on first load
+chrome.storage.sync.get("popupTableTextSize", function (item) {
+    if(item.popupTableTextSize == null) { restoreSettings(); }
+})
+chrome.storage.sync.get("allArticles", function (item) {
+    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": []}) }
+})
