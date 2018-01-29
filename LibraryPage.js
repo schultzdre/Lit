@@ -85,17 +85,15 @@ function addArticleToTable(tableName, pmid, psugcount) {
     //Record if being added to Library
     if (tableName === "Library") {
         chrome.storage.sync.get("allArticles", function (item) {
-            //Get new name
-            var d = document.getElementById("libraryTitle").innerHTML + "%in%" + pmid;
-            //If already in library dont add
-            console.log(item.allArticles.indexOf(d))
-            if (item.allArticles.indexOf(d) != -1) { return; }
+            //See if article is in the library already
+            index = Number(document.getElementById("libraryIndex").innerHTML);
+            if (item.allArticles[index].indexOf(pmid) != -1) { return; }
             
             //Save
-            if (item.allArticles == null) {
-                item.allArticles = [d]
+            if (item.allArticles[index] == null) {
+                item.allArticles[index] = [pmid]
             } else {
-                item.allArticles.push(d);
+                item.allArticles[index].push(pmid);
             };
             //Save
             chrome.storage.sync.set({ "allArticles": item.allArticles })
@@ -536,14 +534,16 @@ function restoreRowBackgroundColor(row) {
 
 //Onload
 chrome.storage.sync.get("lto", function (item) {
-    var tmp = document.getElementById("libraryTitle").innerHTML = item.lto;
+    document.getElementById("libraryTitle").innerHTML = item.lto;
+})
+chrome.storage.sync.get("ltoindex", function (item) {
+    document.getElementById("libraryIndex").innerHTML = item.ltoindex;
 })
 
 chrome.storage.sync.get("allArticles", function (item) {
-    curlib = document.getElementById("libraryTitle").innerHTML;
-    for (var i = 0; i < item.allArticles.length; i++) {
-        ss = item.allArticles[i].split("%in%");
-        if(ss[0] === curlib) { addArticleToTable("Library",ss[1]) }
+    index = Number(document.getElementById("libraryIndex").innerHTML);
+    for (var i = 0; i < item.allArticles[index].length; i++) {
+        addArticleToTable("Library", item.allArticles[index][i])
     }
 })
 

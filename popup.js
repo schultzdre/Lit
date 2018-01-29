@@ -2,6 +2,7 @@
 function addLibrary() {
     //New Library Name
     var d = document.getElementById("newLibraryName").value;
+    if (d == "") { return;}
     //Append
     ul = document.getElementById("libraryList");
     for (var j = 0; j < ul.childElementCount; j++) {
@@ -10,17 +11,6 @@ function addLibrary() {
             return;
         }
     }
-    li = document.createElement("li");
-    li.id = d;
-    li.innerHTML = d;
-    li.onclick = function () { openURL(this) }
-    ul.appendChild(li)
-    //Add as remove option
-    var select = document.getElementById("removeOptions");
-    var option = document.createElement("option")
-    option.innerHTML = d;
-    option.id = "OPT" + d;
-    select.appendChild(option);
     //Save
     chrome.storage.sync.get("libraries", function (item) {
         if (item.libraries == null) {
@@ -29,7 +19,19 @@ function addLibrary() {
             liblist = item.libraries;
             liblist.push(d);
         };
-        chrome.storage.sync.set({ "libraries": liblist})
+        chrome.storage.sync.set({ "libraries": liblist })
+        while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+        }
+        loadListOfLibraries()
+    })
+    chrome.storage.sync.get("allArticles", function (item) {
+        if (item.allArticles == null) {
+            item.allArticles = [[]];
+        } else {
+            item.allArticles.push([]);
+        }
+        chrome.storage.sync.set({ "allArticles": item.allArticles })
     })
     //Reset
     document.getElementById("newLibraryName").value = "";
@@ -56,12 +58,22 @@ function loadListOfLibraries() {
             li.id = item.libraries[i];
             li.innerHTML = item.libraries[i];
             li.onclick = function () { openURL(this) }
-            ul.appendChild(li)
+            
             //Add as remove option
             var option = document.createElement("option")
             option.innerHTML = item.libraries[i];
             option.id = "OPT" + item.libraries[i];
-            select.appendChild(option);
+            //select.appendChild(option);
+
+            //Order
+            if (i == 0) {
+                ul.appendChild(li);
+                select.appendChild(option);
+            } else {
+                for (var j = 0; j < ul.childElementCount; j++) {if (item.libraries[i].toLowerCase() < ul.childNodes[j].innerHTML.toLowerCase()) {break;}}
+                ul.insertBefore(li,ul.childNodes[j]);
+                select.insertBefore(option,select.childNodes[j])
+            }
         }
     })
 }
@@ -74,20 +86,12 @@ function removeLibrary() {
         var index = item.libraries.indexOf(curlib);
         item.libraries.splice(index, 1);
         chrome.storage.sync.set({ "libraries": item.libraries })
-    })
-    //Remove articles from that library from saved list
-    chrome.storage.sync.get("allArticles", function (item) {
-        var i = 0;
-        while (i < item.allArticles.length) {
-            ss = item.allArticles[i].split("%in%");
-            if (ss[0] === curlib) {
-                item.allArticles.splice(i, 1);
-            } else {
-                i++;
-            }
-        }
-        chrome.storage.sync.set({ "allArticles": item.allArticles })
-        console.log(item.allArticles)
+        //Remove articles from that library from saved list
+        chrome.storage.sync.get("allArticles", function (item) {
+            item.allArticles.splice(index, 1);
+            chrome.storage.sync.set({ "allArticles": item.allArticles })
+            console.log(item.allArticles)
+        })
     })
     //Remove nodes
     document.getElementById(curlib).remove();
@@ -104,17 +108,6 @@ function editName() {
         item.libraries[index] = curlib;
         chrome.storage.sync.set({ "libraries": item.libraries })
     })
-    //Change name in articles
-    chrome.storage.sync.get("allArticles", function (item) {
-        var i = 0;
-        for (var i = 0; i < item.allArticles.length; i++) {
-            ss = item.allArticles[i].split("%in%");
-            if (ss[0] === oldlib) {
-                item.allArticles[i] = curlib + "%in%" + ss[1];
-            }
-        }
-        chrome.storage.sync.set({ "allArticles": item.allArticles })
-    })
     //Remove nodes
     tmp = document.getElementById(oldlib);
     tmp.id = curlib;
@@ -126,6 +119,9 @@ function editName() {
 
 function openURL(tab) {
     chrome.storage.sync.set({ "lto": tab.innerHTML })
+    chrome.storage.sync.get("libraries", function (item) {
+        chrome.storage.sync.set({ "ltoindex": item.libraries.indexOf(tab.innerHTML) })
+    })
     var newURL = "LibraryPage.html";
     chrome.tabs.create({ url: newURL });
 }
@@ -210,6 +206,6 @@ loadListOfLibraries()
 chrome.storage.sync.get("popupTableTextSize", function (item) {
     if(item.popupTableTextSize == null) { restoreSettings(); }
 })
-chrome.storage.sync.get("allArticles", function (item) {
-    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": []}) }
-})
+//chrome.storage.sync.get("allArticles", function (item) {
+//    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": []}) }
+//})
