@@ -23,6 +23,10 @@ function addLibrary() {
         while (ul.firstChild) {
             ul.removeChild(ul.firstChild);
         }
+        var select = document.getElementById("removeOptions");
+        while (select.firstChild) {
+            select.removeChild(select.firstChild);
+        }
         loadListOfLibraries()
     })
     chrome.storage.sync.get("allArticles", function (item) {
@@ -92,10 +96,16 @@ function removeLibrary() {
             chrome.storage.sync.set({ "allArticles": item.allArticles })
             console.log(item.allArticles)
         })
+        ul = document.getElementById("libraryList");
+        while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+        }
+        var select = document.getElementById("removeOptions");
+        while (select.firstChild) {
+            select.removeChild(select.firstChild);
+        }
+        loadListOfLibraries()
     })
-    //Remove nodes
-    document.getElementById(curlib).remove();
-    document.getElementById("OPT" + curlib).remove();
 }
 
 function editName() {
@@ -107,14 +117,18 @@ function editName() {
         var index = item.libraries.indexOf(oldlib);
         item.libraries[index] = curlib;
         chrome.storage.sync.set({ "libraries": item.libraries })
+        ul = document.getElementById("libraryList");
+        while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+        }
+        var select = document.getElementById("removeOptions");
+        while (select.firstChild) {
+            select.removeChild(select.firstChild);
+        }
+        loadListOfLibraries()
     })
     //Remove nodes
-    tmp = document.getElementById(oldlib);
-    tmp.id = curlib;
-    tmp.innerHTML = curlib;
-    tmp1 = document.getElementById("OPT" + oldlib);
-    tmp1.id = "OPT" + curlib;
-    tmp1.innerHTML = curlib;
+    document.getElementById("newLibraryName").value = "";
 }
 
 function openURL(tab) {
@@ -207,5 +221,5 @@ chrome.storage.sync.get("popupTableTextSize", function (item) {
     if(item.popupTableTextSize == null) { restoreSettings(); }
 })
 //chrome.storage.sync.get("allArticles", function (item) {
-//    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": []}) }
+//    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": [[]]}) }
 //})

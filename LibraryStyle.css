@@ -64,10 +64,15 @@ h1 {
 }
 
 #popupBody {
-    min-width: 200px; /* your desired width */
+    min-width: 300px; /* your desired width */
     max-width: 100%;
     min-height: 200px;
     max-height: 100%;
     position: relative;
     vertical-align: middle;
+    font-size: 15px;
+}
+
+#LoadTitle {
+    font-weight: bold;
 }

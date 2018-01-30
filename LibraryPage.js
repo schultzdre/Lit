@@ -245,10 +245,11 @@ function removeFromLibrary(marker,pmid) {
     tr.remove();
     if (marker === "L") {
         chrome.storage.sync.get("allArticles", function (item) {
-            index = item.allArticles.indexOf(document.getElementById("libraryTitle").innerHTML + "%in%" + pmid);
-            item.allArticles.splice(index, 1);
+            //See if article is in the library already
+            index = Number(document.getElementById("libraryIndex").innerHTML);
+            pmindex = item.allArticles[index].indexOf(pmid);
+            item.allArticles[index].splice(pmindex, 1);
             chrome.storage.sync.set({ "allArticles": item.allArticles })
-            console.log(item.allArticles)
         })
     }
 }
@@ -531,6 +532,72 @@ function restoreRowBackgroundColor(row) {
         row.childNodes[i].style.backgroundColor = document.getElementById("tableBackgroundColor").value;
     }
 }
+
+//Download
+function downloadLibrary() {
+    //Create list of library
+    var table = document.getElementById("Library")
+    if (table.childElementCount < 2) { return; }
+    var libr = table.childNodes[2].childNodes[1].innerHTML
+    for (var i = 3; i <= table.childElementCount; i++) {
+        libr = libr + "\n" + table.childNodes[i].childNodes[1].innerHTML
+    }
+
+    //Create element and download
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(libr));
+    element.setAttribute('download', 'LitLibrary.txt');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+//Upload
+function handleFileSelect(evt) {
+    var files = evt.target.files;
+    var re = new RegExp("^([0-9]{8})$");
+    // Loop through the FileList and render image files as thumbnails.
+    for (var i = 0, f; f = files[i]; i++) {
+        // Only process image files.
+        if (!f.type.match('text.*')) {
+            continue;
+        }
+        var reader = new FileReader();
+        // Closure to capture the file information.
+        reader.onload = (function (theFile) {
+            return function (e) {
+                //Get ids and add to library table
+                pmids = e.target.result.split("\n");
+                for (var j = 0; j < pmids.length; j++) {
+                    if (re.test(pmids[j])) {
+                        addArticleToTable("Library", pmids[j])
+                    }
+                }
+                //Make sure they are added to data
+                chrome.storage.sync.get("allArticles", function (item) {
+                    //See if article is in the library already
+                    index = Number(document.getElementById("libraryIndex").innerHTML);
+                    for (var j = 0; j < pmids.length; j++) {
+                        if (item.allArticles[index].indexOf(pmids[j]) == -1) {
+                            //Save
+                            if (item.allArticles[index] == null) {
+                                item.allArticles[index] = [pmids[j]]
+                            } else {
+                                item.allArticles[index].push(pmids[j]);
+                            };
+                        }
+                    }
+                    //Save
+                    chrome.storage.sync.set({ "allArticles": item.allArticles })
+                })
+            };
+        })(f);
+        // Read in the image file as a data URL.
+        reader.readAsText(f);
+    }
+}
+
 
 //Onload
 chrome.storage.sync.get("lto", function (item) {
