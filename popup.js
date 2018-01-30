@@ -131,6 +131,86 @@ function editName() {
     document.getElementById("newLibraryName").value = "";
 }
 
+//Download
+function downloadAllLibrary() {
+    //Create list of library
+    chrome.storage.sync.get(["libraries","allArticles"], function (item) {
+        for (var i = 0; i < item.libraries.length; i++) {
+            //Save library name
+            if (i == 0) {
+                var libr = item.libraries[i];
+            } else {
+                libr = libr + "\n" + item.libraries[i];
+            }
+            //Save papers in it
+            for (var j = 0; j < item.allArticles[i].length; j++) {
+                libr = libr + "\n" + item.allArticles[i][j];
+            }
+        }
+
+        //Create element and download
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(libr));
+        element.setAttribute('download', 'LitLibraries.txt');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    })
+}
+
+//Upload
+function handleAllFileSelect(evt) {
+    var files = evt.target.files;
+    var re = new RegExp("^([0-9]{8})$");
+    // Only process text files.
+    f = files[0]
+    if (!f.type.match('text.*')) {
+        return;
+    }
+    var reader = new FileReader();
+    // Closure to capture the file information.
+    reader.onload = (function (theFile) {
+        return function (e) {
+            chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
+                //Get ids and add to library table
+                console.log(e.target.result)
+                pmids = e.target.result.split(/\r?\n/);
+                console.log(pmids)
+                for (var j = 0; j < pmids.length; j++) { console.log(re.test(pmids[j])) }
+                for (var j = 0; j < pmids.length; j++) {
+                    if (!re.test(pmids[j])) { //If it is a library
+                        //Find library index
+                        index = item.libraries.indexOf(pmids[j])
+                        if (index == -1) {
+                            index = item.libraries.length;
+                            item.libraries.push(pmids[j])
+                            item.allArticles.push([])
+                        }
+                    } else {
+                        if (item.allArticles[index].indexOf(pmids[j]) == -1) {
+                            item.allArticles[index].push(pmids[j])
+                        }
+                    }
+                }
+                chrome.storage.sync.set({ "allArticles": item.allArticles })
+                chrome.storage.sync.set({ "libraries": item.libraries })
+                ul = document.getElementById("libraryList");
+                while (ul.firstChild) {
+                    ul.removeChild(ul.firstChild);
+                }
+                var select = document.getElementById("removeOptions");
+                while (select.firstChild) {
+                    select.removeChild(select.firstChild);
+                }
+                loadListOfLibraries()
+            })
+        };
+    })(f);
+    // Read in the image file as a data URL.
+    reader.readAsText(f);
+}
+
 function openURL(tab) {
     chrome.storage.sync.set({ "lto": tab.innerHTML })
     chrome.storage.sync.get("libraries", function (item) {
@@ -211,15 +291,19 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("backgroundColor").addEventListener("input", popupBackgroundColor);
     document.getElementById("docFont").addEventListener("input", popupFont);
     document.getElementById("restoreSettings").addEventListener("click", restoreSettings);
-});
 
-//onload
-loadListOfLibraries()
+    document.getElementById("downloadButton").addEventListener("click", downloadAllLibrary);
+    document.getElementById("uploadButton").addEventListener("change", handleAllFileSelect, false);
+});
 
 //on first load
 chrome.storage.sync.get("popupTableTextSize", function (item) {
     if(item.popupTableTextSize == null) { restoreSettings(); }
 })
-//chrome.storage.sync.get("allArticles", function (item) {
-//    if(item.allArticles == null) { chrome.storage.sync.set({ "allArticles": [[]]}) }
-//})
+chrome.storage.sync.get(["libraries","allArticles"], function (item) {
+    if (item.allArticles == null) { chrome.storage.sync.set({ "allArticles": [[]] }) }
+    if (item.libraries == null) { chrome.storage.sync.set({ "libraries": [] }) }
+})
+
+//onload
+loadListOfLibraries()

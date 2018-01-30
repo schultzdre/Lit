@@ -557,9 +557,9 @@ function downloadLibrary() {
 function handleFileSelect(evt) {
     var files = evt.target.files;
     var re = new RegExp("^([0-9]{8})$");
-    // Loop through the FileList and render image files as thumbnails.
+    // Loop through the FileList
     for (var i = 0, f; f = files[i]; i++) {
-        // Only process image files.
+        // Only process text files.
         if (!f.type.match('text.*')) {
             continue;
         }
