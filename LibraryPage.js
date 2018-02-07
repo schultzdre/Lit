@@ -598,7 +598,6 @@ function handleFileSelect(evt) {
     }
 }
 
-
 //Onload
 chrome.storage.sync.get("lto", function (item) {
     document.getElementById("libraryTitle").innerHTML = item.lto;
