@@ -1,5 +1,16 @@
 //Settings
-$("#Latest").colResizable({ resizeMode: 'flex' });
+$("#Latest").colResizable({ resizeMode: 'fit' });
+window.onresize = function () {
+    table = document.getElementById("Latest");
+    tw = Number(table.style.width.replace("px",""));
+    ww = window.innerWidth;
+    sf = ww/tw;
+    tr = document.getElementsByClassName("searchHeader")
+    for (var i = 0; i < tr.childElementCount; i++) {
+        ow = Number(tr.children[i].style.width.replace("px",""));
+        tr.children[i].style.width = Math.floor(ow*sf) + "px";
+    }
+}
 function changeTableTextSize() {
     var sz = document.getElementById("tableTextSize").value + "px";
     tags = ["TD", "TH", "INPUT", "P", "DIV", "OPTION", "BUTTON"]
@@ -252,6 +263,7 @@ function addAuthorLatest() {
 }
 function reloadAuthorLatest() {
     chrome.storage.sync.get("authorLatest", function (item) {
+        if (item.authorLatest == null) {return;}
         var ul = document.getElementById("authorsList");
         var select = document.getElementById("removeAuthorOptions");
         while (ul.firstChild) {
@@ -317,6 +329,7 @@ function addTermLatest() {
 }
 function reloadTermLatest() {
     chrome.storage.sync.get("termLatest", function (item) {
+        if (item.termLatest == null) {return;}
         var ul = document.getElementById("termsList");
         var select = document.getElementById("removeTermOptions");
         while (ul.firstChild) {
@@ -365,56 +378,26 @@ function reloadLibsLatest() {
             ul.removeChild(ul.firstChild);
         }
 
-        //Load the ones already there
-        if (item.librariesLatest != null) {
-            var alllibs = item.librariesLatest.map(function (e) { e = e.split("%in%"); return e; });
-            for (var i = 0; i < alllibs.length; i++) {
-                var li = document.createElement("li");
-                li.innerHTML = alllibs[i][0] + ": ";
-                li.id = alllibs[i][0];
-                var input = document.createElement("input");
-                input.id = alllibs[i][0];
-                input.value = alllibs[i][1];
-                input.type = "number";
-                input.style = "width: 3em";
-                input.onchange = function () { changeLibrariesLatest(this); };
-                li.appendChild(input);
-                ul.appendChild(li);
-            }
-        }
-        //Load any new ones
-        alllibs = [];
-        for (var j = 0; j < ul.childElementCount; j ++) {
-            alllibs.push(ul.childNodes[j].id)
-        }
+        //Load Libraries
         for (var i = 0; i < item.libraries.length; i++) {
-            if (alllibs.indexOf(item.libraries[i]) == -1) {
-                var li = document.createElement("li");
-                li.innerHTML = item.libraries[i] + ": ";
-                var input = document.createElement("input");
-                input.id = item.libraries[i];
-                input.value = "999";
-                input.type = "number";
-                input.style = "width: 3em";
-                input.onchange = function () { changeLibrariesLatest(this); };
-                //li.onmouseover = function () { changeCellBackgroundColor(this); };
-                li.appendChild(input);
-                ul.appendChild(li);
-                if (item.librariesLatest == null) {
-                    item.librariesLatest = [item.libraries[i] + "%in%999"];
-                } else {
-                    item.librariesLatest.push(item.libraries[i] + "%in%999");
-                }
-            }
+            var li = document.createElement("li");
+            li.innerHTML = item.libraries[i] + ": ";
+            li.id = item.libraries[i];
+            var input = document.createElement("input");
+            input.id = item.libraries[i];
+            input.value = item.librariesLatest[i];
+            input.type = "number";
+            input.style = "width: 3em";
+            input.onchange = function () { changeLibrariesLatest(this); };
+            li.appendChild(input);
+            ul.appendChild(li);
         }
-        chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
     })
 }
 function changeLibrariesLatest(node) {
-    chrome.storage.sync.get("librariesLatest", function (item) {
-        var alllibs = item.librariesLatest.map(function (e) { e = e.replace(/%in%.*$/,""); return e; });
-        index = alllibs.indexOf(node.parentNode.id)
-        item.librariesLatest[index] = node.parentNode.id + "%in%" + node.value;
+    chrome.storage.sync.get(["libraries","librariesLatest"], function (item) {
+        index = item.libraries.indexOf(node.parentNode.id)
+        item.librariesLatest[index] = node.value;
         chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
     })
 }

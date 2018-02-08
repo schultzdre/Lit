@@ -1,7 +1,21 @@
 //Library page functions
-$("#Library").colResizable({ resizeMode: 'flex' });
-$("#Search").colResizable({ resizeMode: 'flex' });
-$("#Recommendations").colResizable({ resizeMode: 'flex' });
+$("#Library").colResizable({ resizeMode: 'fit' });
+$("#Search").colResizable({ resizeMode: 'fit' });
+$("#Recommendations").colResizable({ resizeMode: 'fit' });
+
+window.onresize = function () {
+    tr = document.getElementsByClassName("searchHeader")
+    for (var k = 0; k < tr.length; k++) {
+        table = tr[k].parentNode.parentNode;
+        tw = Number(table.style.width.replace("px",""));
+        ww = window.innerWidth;
+        sf = ww/tw;
+        for (var i = 0; i < tr[k].childElementCount; i++) {
+            ow = Number(tr[k].children[i].style.width.replace("px",""));
+            tr[k].children[i].style.width = Math.floor(ow*sf) + "px";
+        }
+    }
+}
 
 //Hide to begin with
 document.getElementById("Search").style.display = "none";
@@ -552,11 +566,49 @@ function downloadLibrary() {
     element.click();
     document.body.removeChild(element);
 }
-
+function downloadCitations() {
+    chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
+        format = document.getElementById("citationFormat").value
+        index = item.libraries.indexOf(document.getElementById("libraryTitle").innerHTML);
+        pmids = item.allArticles[index][0]
+        for (var i = 1; i < item.allArticles[index].length; i++) {
+            pmids = pmids + "," + item.allArticles[index][i];
+        }
+        console.log(pmids)
+        
+        if (format == "NBIB" || format == "RIS") {
+            newURL = "https://www.ncbi.nlm.nih.gov/pmc/utils/ctxp?ids=" + pmids + "&report=" + format.toLowerCase();
+            chrome.tabs.create({ url: newURL });
+            return;
+        } else if (format == "JSON") {
+            newURL = "https://www.ncbi.nlm.nih.gov/pmc/utils/ctxp?ids=" + pmids + "&report=citeproc";
+            //Open connection
+            var xhr = new XMLHttpRequest(),
+                method = "GET";
+            //Execute
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                    //read the document
+                    var doc = xhr.responseText;
+                    var element = document.createElement('a');
+                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(doc));
+                    element.setAttribute('download', 'LitLibrary.json');
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                }
+            };
+            xhr.open(method, newURL);
+            xhr.send();
+            return;
+        }
+    })
+}
 //Upload
 function handleFileSelect(evt) {
     var files = evt.target.files;
-    var re = new RegExp("^([0-9]{8})$");
+    var re = new RegExp("^([0-9]*)$");
     // Loop through the FileList
     for (var i = 0, f; f = files[i]; i++) {
         // Only process text files.
@@ -605,14 +657,12 @@ chrome.storage.sync.get("lto", function (item) {
 chrome.storage.sync.get("ltoindex", function (item) {
     document.getElementById("libraryIndex").innerHTML = item.ltoindex;
 })
-
 chrome.storage.sync.get("allArticles", function (item) {
     index = Number(document.getElementById("libraryIndex").innerHTML);
     for (var i = 0; i < item.allArticles[index].length; i++) {
         addArticleToTable("Library", item.allArticles[index][i])
     }
 })
-
 chrome.storage.sync.get("popupTableTextSize", function (item) {
     var sz = item.popupTableTextSize;
     tags = ["TD", "TH", "INPUT", "P", "DIV", "OPTION", "BUTTON"]

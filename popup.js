@@ -17,30 +17,23 @@ function addLibrary() {
         }
     }
     //Save
-    chrome.storage.sync.get("libraries", function (item) {
+    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles"], function (item) {
+        //Add to list
         if (item.libraries == null) {
-            liblist = [d]
-        } else {
-            liblist = item.libraries;
-            liblist.push(d);
-        };
-        chrome.storage.sync.set({ "libraries": liblist })
-        while (ul.firstChild) {
-            ul.removeChild(ul.firstChild);
-        }
-        var select = document.getElementById("removeOptions");
-        while (select.firstChild) {
-            select.removeChild(select.firstChild);
-        }
-        loadListOfLibraries()
-    })
-    chrome.storage.sync.get("allArticles", function (item) {
-        if (item.allArticles == null) {
+            item.libraries = [d];
             item.allArticles = [[]];
+            item.librariesLatest = [999 + ""];
         } else {
+            item.libraries.push(d);
             item.allArticles.push([]);
-        }
+            item.librariesLatest.push(999 + "");
+        };
+        //Save lists
+        chrome.storage.sync.set({ "libraries": item.libraries })
         chrome.storage.sync.set({ "allArticles": item.allArticles })
+        chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
+        //load list of libraries
+        loadListOfLibraries()
     })
     //Reset
     document.getElementById("newLibraryName").value = "";
@@ -57,9 +50,13 @@ function addEnter() {
 
 function loadListOfLibraries() {
     chrome.storage.sync.get("libraries", function (item) {
-        //Get variables
+        //REmove previous
         var ul = document.getElementById("libraryList");
         var select = document.getElementById("removeOptions");
+        while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+            select.removeChild(select.firstChild);
+        }
         //Load them
         for (var i = 0; i < item.libraries.length; i++) {
             //Add to list
@@ -76,7 +73,6 @@ function loadListOfLibraries() {
             var option = document.createElement("option")
             option.innerHTML = item.libraries[i];
             option.id = "OPT" + item.libraries[i];
-            //select.appendChild(option);
 
             //Order
             if (i == 0) {
@@ -102,23 +98,11 @@ function removeLibrary() {
         //Remove articles from that library from saved list
         item.allArticles.splice(index, 1);
         chrome.storage.sync.set({ "allArticles": item.allArticles })
-        //Remove from popup
-        ul = document.getElementById("libraryList");
-        while (ul.firstChild) {
-            ul.removeChild(ul.firstChild);
-        }
-        var select = document.getElementById("removeOptions");
-        while (select.firstChild) {
-            select.removeChild(select.firstChild);
-        }
+        //Remove latest
+        item.librariesLatest.splice(index,1);
+        chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
+        //Reload
         loadListOfLibraries()
-        //Remove from latest
-        var alllibs = item.librariesLatest.map(function (e) { e = e.replace(/%in%.*$/, ""); return e; });
-        index = alllibs.indexOf(curlib)
-        if (index != -1) {
-            item.librariesLatest.splice(index,1);
-            chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
-        }
     })
 }
 
@@ -132,15 +116,7 @@ function editName() {
         var index = item.libraries.indexOf(oldlib);
         item.libraries[index] = curlib;
         chrome.storage.sync.set({ "libraries": item.libraries })
-        //Update page
-        ul = document.getElementById("libraryList");
-        while (ul.firstChild) {
-            ul.removeChild(ul.firstChild);
-        }
-        var select = document.getElementById("removeOptions");
-        while (select.firstChild) {
-            select.removeChild(select.firstChild);
-        }
+        //Reload
         loadListOfLibraries()
         //Update latest
         var alllibs = item.librariesLatest.map(function (e) { e = e.replace(/%in%.*$/, ""); return e; });
@@ -183,6 +159,51 @@ function downloadAllLibrary() {
         document.body.removeChild(element);
     })
 }
+function downloadCitations() {
+    chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
+        format = document.getElementById("citationFormat").value
+        pmids = ""
+        console.log("start")
+        for (var i = 0; i < item.libraries.length; i++) {
+            for (var j = 0; j < item.allArticles[i].length; j++) {
+                if (pmids.indexOf(item.allArticles[i][j]) == -1) {
+                    pmids = pmids + "," + item.allArticles[i][j];
+                }
+            }
+        }
+        console.log("end")
+        pmids = pmids.substr(1);
+        console.log(pmids)
+
+        if (format == "NBIB" || format == "RIS") {
+            newURL = "https://www.ncbi.nlm.nih.gov/pmc/utils/ctxp?ids=" + pmids + "&report=" + format.toLowerCase();
+            chrome.tabs.create({ url: newURL });
+            return;
+        } else if (format == "JSON") {
+            newURL = "https://www.ncbi.nlm.nih.gov/pmc/utils/ctxp?ids=" + pmids + "&report=citeproc";
+            //Open connection
+            var xhr = new XMLHttpRequest(),
+                method = "GET";
+            //Execute
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                    //read the document
+                    var doc = xhr.responseText;
+                    var element = document.createElement('a');
+                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(doc));
+                    element.setAttribute('download', 'LitLibrary.json');
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                }
+            };
+            xhr.open(method, newURL);
+            xhr.send();
+            return;
+        }
+    })
+}
 
 //Upload
 function handleAllFileSelect(evt) {
@@ -220,14 +241,6 @@ function handleAllFileSelect(evt) {
                 }
                 chrome.storage.sync.set({ "allArticles": item.allArticles })
                 chrome.storage.sync.set({ "libraries": item.libraries })
-                ul = document.getElementById("libraryList");
-                while (ul.firstChild) {
-                    ul.removeChild(ul.firstChild);
-                }
-                var select = document.getElementById("removeOptions");
-                while (select.firstChild) {
-                    select.removeChild(select.firstChild);
-                }
                 loadListOfLibraries()
             })
         };
@@ -330,6 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("restoreSettings").addEventListener("click", restoreSettings);
 
     document.getElementById("downloadButton").addEventListener("click", downloadAllLibrary);
+    document.getElementById("downloadCitations").addEventListener("click", downloadCitations);
     document.getElementById("uploadButton").addEventListener("change", handleAllFileSelect, false);
     document.getElementById("latestButton").addEventListener("click", openLatest);
 });
@@ -337,10 +351,6 @@ document.addEventListener('DOMContentLoaded', function () {
 //on first load
 chrome.storage.sync.get("popupTableTextSize", function (item) {
     if(item.popupTableTextSize == null) { restoreSettings(); }
-})
-chrome.storage.sync.get(["libraries","allArticles"], function (item) {
-    if (item.allArticles == null) { chrome.storage.sync.set({ "allArticles": [[]] }) }
-    if (item.libraries == null) { chrome.storage.sync.set({ "libraries": [] }) }
 })
 
 //onload
