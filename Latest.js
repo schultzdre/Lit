@@ -109,10 +109,7 @@ function sortTable(tname, cname) {
     //Get table
     table = document.getElementById(tname);
     //Delete open frames
-    nodes = table.childNodes;
-    for (var i = 0; i < nodes.length; i++) {
-        if (/FR/g.test(nodes[i].id)) { nodes[i].remove(); }
-    }
+    nodes = table.children;
     //Set the sorting direction to ascending:
     dir = "asc";
     //Get rows

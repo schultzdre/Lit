@@ -16,11 +16,13 @@
     document.getElementById("getRArticles").addEventListener("click", function () { getRecommendationList('Recommendations') });
     document.getElementById("getRReviews").addEventListener("click", function () { getRecommendationList('Reviews') });
     document.getElementById("clearRTable").addEventListener("click", function () { clearRecommendationsTable() });
+    document.getElementById("toggleRemoved").addEventListener("click", function () { toggleRemoved() });
 
     //Filter
     document.getElementById("filterSearch").addEventListener("keydown", function () { filterTable('Search', 'filterSearch', 'filterSearchRegExBool', 'filterSearchByField') });
-    document.getElementById("filterLibrary").addEventListener("keydown", function () { filterTable('Library', 'filterLibrary', 'filterLibraryRegExBool', 'filterLibraryhByField') });
+    document.getElementById("filterLibrary").addEventListener("keydown", function () { filterTable('Library', 'filterLibrary', 'filterLibraryRegExBool', 'filterLibraryByField') });
     document.getElementById("filterRecommendations").addEventListener("keydown", function () { filterTable('Recommendations', 'filterRecommendations', 'filterRecommendationsRegExBool', 'filterRecommendationsByField') });
+    document.getElementById("filterRemoved").addEventListener("keydown", function () { filterTable('Removed', 'filterRemoved', 'filterRemovedRegExBool', 'filterRemovedByField') });
 
     //sortTable function
     document.getElementById("SearchPMID").addEventListener("click", function () { sortTable("Search", "PMID") });
@@ -34,6 +36,7 @@
     document.getElementById("SearchMonth").addEventListener("click", function () { sortTable("Search", "Month") });
     document.getElementById("SearchAbstract").addEventListener("click", function () { sortTable("Search", "Abstract") });
     document.getElementById("SearchJournalFull").addEventListener("click", function () { sortTable("Search", "JournalFull") });
+    document.getElementById("LibraryTag").addEventListener("click", function () { sortTable("Library", "Tag") });
     document.getElementById("LibraryPMID").addEventListener("click", function () { sortTable("Library", "PMID") });
     document.getElementById("LibraryAuthors").addEventListener("click", function () { sortTable("Library", "Authors") });
     document.getElementById("LibraryTitle").addEventListener("click", function () { sortTable("Library", "Title") });
@@ -57,6 +60,18 @@
     document.getElementById("RecommendationsMonth").addEventListener("click", function () { sortTable("Recommendations", "Month") });
     document.getElementById("RecommendationsAbstract").addEventListener("click", function () { sortTable("Recommendations", "Abstract") });
     document.getElementById("RecommendationsJournalFull").addEventListener("click", function () { sortTable("Recommendations", "JournalFull") });
+    
+    document.getElementById("RemovedPMID").addEventListener("click", function () { sortTable("Removed", "PMID") });
+    document.getElementById("RemovedAuthors").addEventListener("click", function () { sortTable("Removed", "Authors") });
+    document.getElementById("RemovedTitle").addEventListener("click", function () { sortTable("Removed", "Title") });
+    document.getElementById("RemovedJournalAbv").addEventListener("click", function () { sortTable("Removed", "JournalAbv") });
+    document.getElementById("RemovedYear").addEventListener("click", function () { sortTable("Removed", "Year") });
+    document.getElementById("RemovedVolume").addEventListener("click", function () { sortTable("Removed", "Volume") });
+    document.getElementById("RemovedIssue").addEventListener("click", function () { sortTable("Removed", "Issue") });
+    document.getElementById("RemovedPage").addEventListener("click", function () { sortTable("Removed", "Page") });
+    document.getElementById("RemovedMonth").addEventListener("click", function () { sortTable("Removed", "Month") });
+    document.getElementById("RemovedAbstract").addEventListener("click", function () { sortTable("Removed", "Abstract") });
+    document.getElementById("RemovedJournalFull").addEventListener("click", function () { sortTable("Removed", "JournalFull") });
 
 
 });

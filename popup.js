@@ -17,21 +17,27 @@ function addLibrary() {
         }
     }
     //Save
-    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles"], function (item) {
+    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles","libraryTags","libraryRemoved"], function (item) {
         //Add to list
         if (item.libraries == null) {
             item.libraries = [d];
             item.allArticles = [[]];
+            item.libraryTags = [[]];
             item.librariesLatest = [999 + ""];
+            item.libraryRemoved = [[]]
         } else {
             item.libraries.push(d);
             item.allArticles.push([]);
+            item.libraryTags.push([]);
             item.librariesLatest.push(999 + "");
+            item.libraryRemoved.push([])
         };
         //Save lists
         chrome.storage.sync.set({ "libraries": item.libraries })
         chrome.storage.sync.set({ "allArticles": item.allArticles })
+        chrome.storage.sync.set({ "libraryTags": item.libraryTags })
         chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
+        chrome.storage.sync.set({ "libraryRemoved": item.libraryRemoved })
         //load list of libraries
         loadListOfLibraries()
     })
@@ -91,16 +97,19 @@ function removeLibrary() {
     //Get the one to remove
     var curlib = document.getElementById("removeOptions").value;
     //Remove from saved list
-    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles"], function (item) {
+    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles","libraryTags"], function (item) {
         var index = item.libraries.indexOf(curlib);
         item.libraries.splice(index, 1);
         chrome.storage.sync.set({ "libraries": item.libraries })
         //Remove articles from that library from saved list
         item.allArticles.splice(index, 1);
         chrome.storage.sync.set({ "allArticles": item.allArticles })
-        //Remove latest
+        item.libraryTags.splice(index, 1);
+        chrome.storage.sync.set({ "libraryTags": item.libraryTags })
         item.librariesLatest.splice(index,1);
         chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
+        item.libraryRemoved.splice(index, 1);
+        chrome.storage.sync.set({ "libraryRemoved": item.libraryRemoved })
         //Reload
         loadListOfLibraries()
     })
@@ -118,15 +127,6 @@ function editName() {
         chrome.storage.sync.set({ "libraries": item.libraries })
         //Reload
         loadListOfLibraries()
-        //Update latest
-        var alllibs = item.librariesLatest.map(function (e) { e = e.replace(/%in%.*$/, ""); return e; });
-        index = alllibs.indexOf(oldlib)
-        console.log(index)
-        if (index != -1) {
-            var alllibs = item.librariesLatest.map(function (e) { e = e.split("%in%"); return e; });
-            item.librariesLatest[index] = curlib + "%in%" + alllibs[index][1];
-            chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
-        }
     })
     //Remove nodes
     document.getElementById("newLibraryName").value = "";
@@ -208,7 +208,7 @@ function downloadCitations() {
 //Upload
 function handleAllFileSelect(evt) {
     var files = evt.target.files;
-    var re = new RegExp("^([0-9]{8})$");
+    var re = new RegExp("^([0-9]*)$");
     // Only process text files.
     f = files[0]
     if (!f.type.match('text.*')) {

@@ -13,7 +13,7 @@
         <h1 style="display: inline">Library: </h1>
         <h1 style="display: inline" id="libraryTitle"></h1>
         <a id="libraryIndex" style="display: none"></a>
-        <img src="icon-cropped.png" width="57" height="36" align="right"/>
+        <img src="icon-cropped.png" width="60" height="30" align="right"/>
     </div>
     <hr>
         <div class="dropdown">
@@ -86,7 +86,7 @@
                     <th id="SearchPage" style="width: 8%;">Page</th>
                     <th id="SearchMonth" style="width: 4%;">Month</th>
                     <th id="SearchAbstract" style="width: 5%;">Abstract</th>
-                    <th id="SearchJournalFull" style="width: 5%;">Journal (Full)</th>
+                    <th id="SearchJournalFull" style="width: 5%;">Journal</th>
                 </tr>
             </table>
         </div>
@@ -99,6 +99,7 @@
             <table id="Library" border="0" cellpadding="0">
                 <tr class="searchHeader">
                     <th style="width: 2%;"></th>
+                    <th id="LibraryTag" style="width: 2%;">Tag</th>
                     <th id="LibraryPMID" style="width: 6%;">PMID</th>
                     <th id="LibraryAuthors" style="width: 15%;">Authors</th>
                     <th id="LibraryTitle" style="width: 25%;">Title</th>
@@ -106,10 +107,10 @@
                     <th id="LibraryYear" style="width: 5%;">Year</th>
                     <th id="LibraryVolume" style="width: 5%;">Volume</th>
                     <th id="LibraryIssue" style="width: 5%;">Issue</th>
-                    <th id="LibraryPage" style="width: 8%;">Page</th>
+                    <th id="LibraryPage" style="width: 6%;">Page</th>
                     <th id="LibraryMonth" style="width: 4%;">Month</th>
-                    <th id="LibraryAbstract" style="width: 5%;">Abstract</th>
-                    <th id="LibraryJournalFull" style="width: 5%;">Journal (Full)</th>
+                    <th id="LibraryAbstract" style="width: 4%;">Abstract</th>
+                    <th id="LibraryJournalFull" style="width: 5%;">Journal</th>
                 </tr>
             </table>
         </div>
@@ -138,10 +139,37 @@
                     <th id="RecommendationsPage" style="width: 8%;">Page</th>
                     <th id="RecommendationsMonth" style="width: 4%;">Month</th>
                     <th id="RecommendationsAbstract" style="width: 4%;">Abstract</th>
-                    <th id="RecommendationsJournalFull" style="width: 4%;">Journal (Full)</th>
+                    <th id="RecommendationsJournalFull" style="width: 4%;">Journal</th>
+                    <th style="width: 2%;"></th>
                 </tr>
             </table>
         </div>
+        <hr>
+        <button id="toggleRemoved">Show/Hide Suspended Papers</button>
+        <div id="removedDiv" style="display: none">
+            <h3>Papers Removed from Suggestions</h3>
+            Search Removed: <input id="filterRemoved" type="text" size="100" />
+            <input id="filterRemovedRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterRemovedByField" type="checkbox" /> By Field <br />
+
+            <table id="Removed" width="100%" border="0" cellpadding="0">
+                <tr class="searchHeader">
+                    <th style="width: 2%;"></th>
+                    <th id="RemovedPMID" style="width: 6%;">PMID</th>
+                    <th id="RemovedAuthors" style="width: 15%;">Authors</th>
+                    <th id="RemovedTitle" style="width: 20%;">Title</th>
+                    <th id="RemovedJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="RemovedYear" style="width: 5%;">Year</th>
+                    <th id="RemovedVolume" style="width: 5%;">Volume</th>
+                    <th id="RemovedIssue" style="width: 5%;">Issue</th>
+                    <th id="RemovedPage" style="width: 8%;">Page</th>
+                    <th id="RemovedMonth" style="width: 4%;">Month</th>
+                    <th id="RemovedAbstract" style="width: 4%;">Abstract</th>
+                    <th id="RemovedJournalFull" style="width: 4%;">Journal</th>
+                </tr>
+            </table>
+        </div>
+        <hr>
 
         <script src="LibraryPage.js"></script>
         <script src="actionButtons.js"></script>

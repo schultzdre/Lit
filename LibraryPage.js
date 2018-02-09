@@ -29,10 +29,7 @@ function sortTable(tname, cname) {
     //Get table
     table = document.getElementById(tname);
     //Delete open frames
-    nodes = table.childNodes;
-    for (var i = 0; i < nodes.length; i++) {
-        if (/FR/g.test(nodes[i].id)) { nodes[i].remove(); }
-    }
+    nodes = table.children;
     //Set the sorting direction to ascending:
     dir = "asc";
     //Get rows
@@ -41,46 +38,109 @@ function sortTable(tname, cname) {
     var index = [];
     for (var j = 1; j < rows.length; j++) { if (rows[j].style.display === "table-row") { index.push(j) } };
     //Sort
-    while (switching) {
-        //start by saying: no switching is done:
-        switching = false;
-        //Go through each
-        for (var i = 1; i < (index.length); i++) {
-            //start by saying there should be no switching:
-            shouldSwitch = false;
-            //Get two elements
-            x = rows[index[i-1]].cells[cname].innerHTML.toLowerCase();
-            y = rows[index[i]].cells[cname].innerHTML.toLowerCase();
-            //Test
-            if (dir == "asc") {
-                if (x > y) {
-                    //if so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
+    if (cname == "Tag") {
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            //Go through each
+            for (var i = 1; i < (index.length); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                //Get two elements
+                x = rows[index[i-1]].cells[cname].children[0].children[0].value.toLowerCase();
+                y = rows[index[i]].cells[cname].children[0].children[0].value.toLowerCase();
+                if (x == "" && y != "") {
+                    //Test
+                    if (dir == "asc") {
+                        if (x < y) {
+                            //if so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x > y) {
+                            //if so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                } else if (x != "" && y != "") {
+                    //Test
+                    if (dir == "asc") {
+                        if (x > y) {
+                            //if so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x < y) {
+                            //if so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
                 }
-            } else if (dir == "desc") {
-                if (x < y) {
-                    //if so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
+            }
+            if (shouldSwitch) {
+                if (index[i] - index[i - 1] == 1) {
+                    rows[index[i-1]].parentNode.insertBefore(rows[index[i]], rows[index[i-1]]);
+                } else {
+                    rows[index[i]].parentNode.insertBefore(rows[index[i]], rows[index[i - 1] + 1]);
+                    rows[index[i-1]].parentNode.insertBefore(rows[index[i-1]], rows[index[i] + 1]);
+                }
+                //Redefine switching
+                switching = true;
+                //Each time a switch is done, increase this count by 1:
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
                 }
             }
         }
-        if (shouldSwitch) {
-            if (index[i] - index[i - 1] == 1) {
-                rows[index[i-1]].parentNode.insertBefore(rows[index[i]], rows[index[i-1]]);
-            } else {
-                rows[index[i]].parentNode.insertBefore(rows[index[i]], rows[index[i - 1] + 1]);
-                rows[index[i-1]].parentNode.insertBefore(rows[index[i-1]], rows[index[i] + 1]);
+    } else {
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            //Go through each
+            for (var i = 1; i < (index.length); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                //Get two elements
+                x = rows[index[i-1]].cells[cname].innerHTML.toLowerCase();
+                y = rows[index[i]].cells[cname].innerHTML.toLowerCase();
+                //Test
+                if (dir == "asc") {
+                    if (x > y) {
+                        //if so, mark as a switch and break the loop:
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x < y) {
+                        //if so, mark as a switch and break the loop:
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
             }
-            //Redefine switching
-            switching = true;
-            //Each time a switch is done, increase this count by 1:
-            switchcount++;
-        } else {
-            if (switchcount == 0 && dir == "asc") {
-                dir = "desc";
+            if (shouldSwitch) {
+                if (index[i] - index[i - 1] == 1) {
+                    rows[index[i-1]].parentNode.insertBefore(rows[index[i]], rows[index[i-1]]);
+                } else {
+                    rows[index[i]].parentNode.insertBefore(rows[index[i]], rows[index[i - 1] + 1]);
+                    rows[index[i-1]].parentNode.insertBefore(rows[index[i-1]], rows[index[i] + 1]);
+                }
+                //Redefine switching
                 switching = true;
+                //Each time a switch is done, increase this count by 1:
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
             }
         }
     }
@@ -90,27 +150,33 @@ function sortTable(tname, cname) {
 function addArticleToTable(tableName, pmid, psugcount) {
     //See if paper is not in already
     if (tableName === "Library") {
-        nodes = document.getElementById("Library").childNodes;
-        for (var i = 1; i < nodes.length; i++) {
-            if (!/FR/g.test(nodes[i].id) && nodes[i].childNodes[1].innerHTML == pmid) { return }
+        table = document.getElementById("Library");
+        if (table.childElementCount > 1) {
+            for (var i = 1; i < table.childElementCount; i++) {
+                console.log(table.children[i].children[2].innerHTML)
+                if (table.children[i].children[2].innerHTML == pmid) { return; }
+            }
         }
     }
 
     //Record if being added to Library
     if (tableName === "Library") {
-        chrome.storage.sync.get("allArticles", function (item) {
+        chrome.storage.sync.get(["allArticles","libraryTags"], function (item) {
             //See if article is in the library already
             index = Number(document.getElementById("libraryIndex").innerHTML);
             if (item.allArticles[index].indexOf(pmid) != -1) { return; }
-            
             //Save
             if (item.allArticles[index] == null) {
-                item.allArticles[index] = [pmid]
+                item.allArticles[index] = [pmid];
+                item.libraryTags[index] = [""];
             } else {
                 item.allArticles[index].push(pmid);
+                item.libraryTags[index].push("");
             };
             //Save
             chrome.storage.sync.set({ "allArticles": item.allArticles })
+            chrome.storage.sync.set({ "libraryTags": item.libraryTags })
+            psugcount = "";
         })
     }
 
@@ -141,8 +207,8 @@ function addArticleToTable(tableName, pmid, psugcount) {
             }
 
             //get all the authors
-            var ln = doc.evaluate('//Author/LastName', doc, null, 0, null);
-            var fn = doc.evaluate('//Author/Initials', doc, null, 0, null);
+            var ln = doc.evaluate('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/AuthorList/Author/LastName', doc, null, 0, null);
+            var fn = doc.evaluate('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/AuthorList/Author/Initials', doc, null, 0, null);
             var lnn = ln.iterateNext()
             var fnn = fn.iterateNext()
             authors = [];
@@ -156,22 +222,22 @@ function addArticleToTable(tableName, pmid, psugcount) {
             } while (lnn != null)
             authors = authors.join('; ')
             adata.push(authors);
-            adata.push(readLocalPath('//Article/ArticleTitle'));
-            adata.push(readLocalPath('//Article/Journal/ISOAbbreviation'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/ArticleTitle'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/ISOAbbreviation'));
 
-            if (readLocalPath('//Journal/JournalIssue/PubDate/Year')) {
-                adata.push(readLocalPath('//Journal/JournalIssue/PubDate/Year'));
-            } else if (readLocalPath('//Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]) {
-                adata.push(readLocalPath('//Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]);
+            if (readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year')) {
+                adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year'));
+            } else if (readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]) {
+                adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]);
             } else {
-                adata.push(readLocalPath('//Article/ArticleDate/Year'));
+                adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/ArticleDate/Year'));
             }
-            adata.push(readLocalPath('//Journal/JournalIssue/Volume'));
-            adata.push(readLocalPath('//Journal/JournalIssue/Issue'))
-            adata.push(readLocalPath('//Article/Pagination/MedlinePgn'));
-            adata.push(readLocalPath('//Journal/JournalIssue/PubDate/Month'))
-            adata.push(readLocalPath('//Article/Abstract/AbstractText'));
-            adata.push(readLocalPath('//Article/Journal/Title'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/Volume'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/Issue'))
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Pagination/MedlinePgn'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/JournalIssue/PubDate/Month'))
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Abstract/AbstractText'));
+            adata.push(readLocalPath('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/Journal/Title'));
 
             //Make tr element
             var align = ["center", "left", "left", "left", "center", "center",
@@ -192,16 +258,20 @@ function addArticleToTable(tableName, pmid, psugcount) {
                 img.src = "blueCircle.png";
                 tr.id = "L" + adata[0];
             } else if (tableName === "Search") {
-                td.onclick = function () { addArticleToTable("Library",adata[0]); removeFromLibrary("S", adata[0]) };
+                td.onclick = function () { addArticleToTable("Library",adata[0],""); removeFromLibrary("S", adata[0]) };
                 img.src = "redCircle.png";
                 tr.id = "S" + adata[0];
             } else if (tableName === "Recommendations") {
                 td.onclick = function () { addArticleToTable("Library", adata[0]); removeFromLibrary("R", adata[0]) };
                 img.src = "yellowCircle.png";
                 tr.id = "R" + adata[0];
+            } else if (tableName === "Removed") {
+                td.onclick = function () { removeArticleFromRemoved(adata[0]); removeFromLibrary("B", adata[0]) };
+                img.src = "blackCircle.png";
+                tr.id = "B" + adata[0];
             }
             
-            td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
+            //td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
             td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
             td.align = "center";
             img.width = "10";
@@ -219,6 +289,24 @@ function addArticleToTable(tableName, pmid, psugcount) {
                 td.style = style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px; font-size: " +  document.getElementById("tableTextSize").value + "px";
                 td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
                 if (document.getElementById("hooverBool").checked) { td.title = psugcount; }
+                tr.appendChild(td);
+            }
+
+            //Add tag if library
+            if (tableName === "Library") {
+                var td = document.createElement("td");
+                td.className = "CellWithComment";
+                td.id = "Tag";
+                span = document.createElement("span");
+                span.className = "CellComment";
+                input = document.createElement("input");
+                input.onkeypress = function() {saveTag(this)}
+                input.value = psugcount;
+                span.appendChild(input);
+                //td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
+                td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
+                td.align = "left";
+                td.appendChild(span);
                 tr.appendChild(td);
             }
 
@@ -243,6 +331,22 @@ function addArticleToTable(tableName, pmid, psugcount) {
                 if (document.getElementById("hooverBool").checked) { td.title = adata[i];}
                 tr.appendChild(td);
             }
+
+            //Move to recommendations
+            if (tableName === "Recommendations") {
+                var td = document.createElement("td");
+                td.id = "remove";
+                var img = document.createElement("img");
+                td.onclick = function () { addArticleToRemoved(adata[0]); removeFromLibrary("R", adata[0]) };
+                img.src = "blackCircle.png";
+                td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
+                td.align = "center";
+                img.width = "10";
+                img.height = "10";
+                td.appendChild(img);
+                tr.appendChild(td);
+            }
+
             //Add tr to table
             table = document.getElementById(tableName);
             table.appendChild(tr);
@@ -252,18 +356,66 @@ function addArticleToTable(tableName, pmid, psugcount) {
     xhr.send();
 }
 
+function toggleRemoved() {
+    div = document.getElementById("removedDiv");
+    if (div.style.display == "") {
+        div.style.display = "none";
+        $("#Removed tr:not(:first)").remove();
+    } else {
+        div.style.display = "";
+        chrome.storage.sync.get("libraryRemoved",function(item) {
+            index = Number(document.getElementById("libraryIndex").innerHTML);
+            for (var i = 0; i < item.libraryRemoved[index].length; i++) {
+                addArticleToTable("Removed",item.libraryRemoved[index][i])
+            }
+        })
+    }
+}
+
+function addArticleToRemoved(pmid) {
+    chrome.storage.sync.get("libraryRemoved",function(item) {
+        index = Number(document.getElementById("libraryIndex").innerHTML);
+        item.libraryRemoved[index].push(pmid)
+        chrome.storage.sync.set({ "libraryRemoved": item.libraryRemoved })
+        if (document.getElementById("removedDiv").style.display == "") {addArticleToTable("Removed",pmid)}
+    })
+}
+
+function removeArticleFromRemoved(pmid) {
+    console.log(pmid)
+    chrome.storage.sync.get("libraryRemoved",function(item) {
+        index = Number(document.getElementById("libraryIndex").innerHTML);
+        ai = item.libraryRemoved[index].indexOf(pmid);
+        item.libraryRemoved[index].splice(ai, 1);
+        chrome.storage.sync.set({ "libraryRemoved": item.libraryRemoved })
+        if (document.getElementById("Recommendations").style.display != "none") {addArticleToTable("Recommendations",pmid,0)}
+    })
+}
+
+function saveTag(node) {
+    console.log(node.value)
+    chrome.storage.sync.get(["allArticles","libraryTags"],function (item) {
+        index = Number(document.getElementById("libraryIndex").innerHTML);
+        ai = item.allArticles[index].indexOf(node.parentNode.parentNode.parentNode.children[2].innerHTML)
+        item.libraryTags[index][ai] = node.value;
+        chrome.storage.sync.set({ "libraryTags": item.libraryTags })
+    })
+}
+
 //Remove article from table
 function removeFromLibrary(marker,pmid) {
     var tr = document.getElementById(marker + pmid);
     if (tr.nextSibling != null && /FR/g.test(tr.nextSibling.id)) { tr.nextSibling.remove(); }
     tr.remove();
     if (marker === "L") {
-        chrome.storage.sync.get("allArticles", function (item) {
+        chrome.storage.sync.get(["allArticles","libraryTags"], function (item) {
             //See if article is in the library already
             index = Number(document.getElementById("libraryIndex").innerHTML);
             pmindex = item.allArticles[index].indexOf(pmid);
             item.allArticles[index].splice(pmindex, 1);
             chrome.storage.sync.set({ "allArticles": item.allArticles })
+            item.libraryTags[index].splice(pmindex, 1)
+            chrome.storage.sync.set({ "libraryTags": item.libraryTags })
         })
     }
 }
@@ -365,20 +517,25 @@ function filterTable(library, searchTerm, regexpBool, byfieldBoolID) {
     } else {
         var regfilt = new RegExp(filt, 'g');
     }
+    console.log(regfilt)
     var byFieldBool = document.getElementById(byfieldBoolID).checked;
     //get nodes
-    nodes = document.getElementById(library).childNodes;
+    nodes = document.getElementById(library).children;
     //if empty
     if (filt.length == 0) {
-        for (var i = 2; i < nodes.length; i++) {
+        for (var i = 1; i < nodes.length; i++) {
             nodes[i].style.display = "table-row";
         }
     } else {
         if (byFieldBool) {
-            for (var i = 2; i < nodes.length; i++) {
+            for (var i = 1; i < nodes.length; i++) {
                 nodes[i].style.display = "none";
                 for (var j = 1; j < nodes[i].childElementCount; j++) {
-                    teststr = nodes[i].childNodes[j].innerHTML;
+                    if (nodes[i].children[j].id != "Tag") {
+                        teststr = nodes[i].children[j].innerHTML;
+                    } else {
+                        teststr = nodes[i].children[j].children[0].children[0].value;
+                    }
                     if (regfilt.test(teststr)) {
                         nodes[i].style.display = "table-row";
                         break;
@@ -386,11 +543,15 @@ function filterTable(library, searchTerm, regexpBool, byfieldBoolID) {
                 }
             }
         } else {
-            for (var i = 2; i < nodes.length; i++) {
+            for (var i = 1; i < nodes.length; i++) {
                 nodes[i].style.display = "none";
                 var teststr = "";
                 for (var j = 1; j < nodes[i].childElementCount; j++) {
-                    teststr = teststr + " " + nodes[i].childNodes[j].innerHTML;
+                    if (nodes[i].children[j].id != "Tag") {
+                        teststr = teststr + " " + nodes[i].children[j].innerHTML;
+                    } else {
+                        teststr = teststr + " " + nodes[i].children[j].children[0].children[0].value;
+                    }
                 }
                 if (regfilt.test(teststr)) {
                     nodes[i].style.display = "table-row";
@@ -434,11 +595,12 @@ function togglePaperIFrame(nodeid) {
 function getRecommendationList(recterm) {
     clearRecommendationsTable()
     //get papers in library
-    nodes = document.getElementById('Library').childNodes
+    nodes = document.getElementById('Library').children
     var libPapers = []
-    for (var i = 2; i < nodes.length; i++) {
-        libPapers.push(nodes[i].children[1].innerHTML)
+    for (var i = 1; i < nodes.length; i++) {
+        libPapers.push(nodes[i].children[2].innerHTML)
     }
+    console.log(libPapers)
     //initialize suggestsion vector
     var sug = [];
     var sugcount = [];
@@ -478,24 +640,34 @@ function getRecommendationList(recterm) {
         xhr.open(method, url, false);
         xhr.send();
     }
-    //Sort them
-    var list = [];
-    for (var j = 0; j < sug.length; j++) {
-        list.push({ 'pmid': sug[j], 'count': sugcount[j] });
-    }
-    list.sort(function (a, b) {
-        return ((a.pmid > b.pmid) ? -1 : ((a.pmid == b.pmid) ? 0 : 1));
-    });
-    list.sort(function (a, b) {
-        return ((a.count > b.count) ? -1 : ((a.count == b.count) ? 0 : 1));
-    });
-    
-    //Add papers to library
-    document.getElementById("Recommendations").style.display = "table";
-    maxs = Number(document.getElementById("maxRecSize").value)
-    for (var k = 0; k < maxs; k++) {
-        addArticleToTable('Recommendations',list[k].pmid,list[k].count)
-    }
+    //Remove removed
+    chrome.storage.sync.get("libraryRemoved",function(item) {
+        index = Number(document.getElementById("libraryIndex").innerHTML);
+        for (var i = 0; i < sug.length; i++) {
+            if (item.libraryRemoved[index].indexOf(sug[i]) != -1) {
+                sug.splice(i,1);
+                sugcount.splice(i,1);
+            }
+        }
+        //Sort them
+        var list = [];
+        for (var j = 0; j < sug.length; j++) {
+            list.push({ 'pmid': sug[j], 'count': sugcount[j] });
+        }
+        list.sort(function (a, b) {
+            return ((a.pmid > b.pmid) ? -1 : ((a.pmid == b.pmid) ? 0 : 1));
+        });
+        list.sort(function (a, b) {
+            return ((a.count > b.count) ? -1 : ((a.count == b.count) ? 0 : 1));
+        });
+        
+        //Add papers to library
+        document.getElementById("Recommendations").style.display = "table";
+        maxs = Number(document.getElementById("maxRecSize").value)
+        for (var k = 0; k < maxs; k++) {
+            addArticleToTable('Recommendations',list[k].pmid,list[k].count)
+        }
+    })
 }
 
 function changeTableTextSize() {
@@ -657,10 +829,10 @@ chrome.storage.sync.get("lto", function (item) {
 chrome.storage.sync.get("ltoindex", function (item) {
     document.getElementById("libraryIndex").innerHTML = item.ltoindex;
 })
-chrome.storage.sync.get("allArticles", function (item) {
+chrome.storage.sync.get(["allArticles","libraryTags"], function (item) {
     index = Number(document.getElementById("libraryIndex").innerHTML);
     for (var i = 0; i < item.allArticles[index].length; i++) {
-        addArticleToTable("Library", item.allArticles[index][i])
+        addArticleToTable("Library", item.allArticles[index][i],item.libraryTags[index][i])
     }
 })
 chrome.storage.sync.get("popupTableTextSize", function (item) {
