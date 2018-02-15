@@ -97,7 +97,7 @@ function removeLibrary() {
     //Get the one to remove
     var curlib = document.getElementById("removeOptions").value;
     //Remove from saved list
-    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles","libraryTags"], function (item) {
+    chrome.storage.sync.get(["libraries", "librariesLatest", "allArticles","libraryTags","libraryRemoved"], function (item) {
         var index = item.libraries.indexOf(curlib);
         item.libraries.splice(index, 1);
         chrome.storage.sync.set({ "libraries": item.libraries })
@@ -171,9 +171,7 @@ function downloadCitations() {
                 }
             }
         }
-        console.log("end")
         pmids = pmids.substr(1);
-        console.log(pmids)
 
         if (format == "NBIB" || format == "RIS") {
             newURL = "https://www.ncbi.nlm.nih.gov/pmc/utils/ctxp?ids=" + pmids + "&report=" + format.toLowerCase();
@@ -218,11 +216,9 @@ function handleAllFileSelect(evt) {
     // Closure to capture the file information.
     reader.onload = (function (theFile) {
         return function (e) {
-            chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
+            chrome.storage.sync.get(["libraries", "allArticles","librariesLatest","libraryTags","libraryRemoved"], function (item) {
                 //Get ids and add to library table
-                console.log(e.target.result)
                 pmids = e.target.result.split(/\r?\n/);
-                console.log(pmids)
                 for (var j = 0; j < pmids.length; j++) { console.log(re.test(pmids[j])) }
                 for (var j = 0; j < pmids.length; j++) {
                     if (!re.test(pmids[j])) { //If it is a library
@@ -232,15 +228,23 @@ function handleAllFileSelect(evt) {
                             index = item.libraries.length;
                             item.libraries.push(pmids[j])
                             item.allArticles.push([])
+                            item.libraryTags.push([]);
+                            item.librariesLatest.push(999 + "");
+                            item.libraryRemoved.push([]);
+                            index = item.libraries.length - 1;
                         }
                     } else {
                         if (item.allArticles[index].indexOf(pmids[j]) == -1) {
                             item.allArticles[index].push(pmids[j])
+                            item.libraryTags[index].push("")
                         }
                     }
                 }
-                chrome.storage.sync.set({ "allArticles": item.allArticles })
                 chrome.storage.sync.set({ "libraries": item.libraries })
+                chrome.storage.sync.set({ "allArticles": item.allArticles })
+                chrome.storage.sync.set({ "libraryTags": item.libraryTags })
+                chrome.storage.sync.set({ "librariesLatest": item.librariesLatest })
+                chrome.storage.sync.set({ "libraryRemoved": item.libraryRemoved })
                 loadListOfLibraries()
             })
         };
@@ -341,12 +345,27 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("backgroundColor").addEventListener("input", popupBackgroundColor);
     document.getElementById("docFont").addEventListener("input", popupFont);
     document.getElementById("restoreSettings").addEventListener("click", restoreSettings);
+    document.getElementById("alterPMsite").addEventListener("click", toggleAlter);
 
     document.getElementById("downloadButton").addEventListener("click", downloadAllLibrary);
     document.getElementById("downloadCitations").addEventListener("click", downloadCitations);
+    document.getElementById("uploadWrap").addEventListener("click", uploadWrapFun);
     document.getElementById("uploadButton").addEventListener("change", handleAllFileSelect, false);
     document.getElementById("latestButton").addEventListener("click", openLatest);
 });
+
+function toggleAlter() {
+    chrome.storage.sync.get("alterPMsite",function(item) {
+        if (node = document.getElementById("alterPMsite").checked) {
+            item.alterPMsite = true;
+        } else {
+            item.alterPMsite = false;
+        }
+        chrome.storage.sync.set({"alterPMsite": item.alterPMsite})
+    })
+}
+
+function uploadWrapFun() {document.getElementById("uploadButton").click()}
 
 //on first load
 chrome.storage.sync.get("popupTableTextSize", function (item) {
@@ -355,3 +374,50 @@ chrome.storage.sync.get("popupTableTextSize", function (item) {
 
 //onload
 loadListOfLibraries()
+//get API key
+chrome.storage.sync.get("APIkey",function () {
+    var xhr = new XMLHttpRequest(),
+    method = "GET";
+    var url = "https://www.ncbi.nlm.nih.gov/account/settings/";
+    //Execute
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            //read the document
+            var doc = xhr.responseText;
+            console.log(doc)
+        APIkey = doc.match(/<th>API Key<\/th>\s*<\/tr>\s*<\/thead>\s*<tbody>\s*<tr>\s*<td>\s*<span>(.*)<\/span>\s*<span>\s*<button id="apiKeyReplaceBtn"/)
+            if (APIkey == null || APIkey == "") {
+                APIkey = null;
+                document.getElementById("APIkey").innerHTML = "No API key found";
+            } else {
+                APIkey = APIkey[1]
+                document.getElementById("APIkey").innerHTML = APIkey;
+            }
+            chrome.storage.sync.set({ "APIkey": APIkey })
+        }
+    };
+    xhr.open(method, url, true);
+    xhr.send();
+})
+
+chrome.storage.sync.get("alterPMsite",function(item) {
+    if (item.alterPMsite) {
+        node = document.getElementById("alterPMsite").checked = true;
+    } else {
+        node = document.getElementById("alterPMsite").checked = false;
+        item.alterPMsite = false;
+    }
+    chrome.storage.sync.set({"alterPMsite": item.alterPMsite})
+})
+
+/*
+chrome.storage.sync.get(["libraries", "allArticles", "librariesLatest","libraryTags","libraryRemoved"], function (item) {
+    console.log(item.libraries)
+    console.log(item.allArticles)
+    console.log(item.librariesLatest)
+    console.log(item.libraryTags)
+    console.log(item.libraryRemoved)
+})
+*/
+
+//7798a29b645c228e0f584966fb20737fdd08

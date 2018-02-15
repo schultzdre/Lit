@@ -7,6 +7,7 @@
     document.getElementById("hooverBool").addEventListener("click", toggleHover);
     document.getElementById("downloadButton").addEventListener("click", downloadLibrary);
     document.getElementById("downloadCitations").addEventListener("click", downloadCitations);
+    document.getElementById("uploadWrap").addEventListener("click", uploadWrapFun);
     document.getElementById("uploadButton").addEventListener("change", handleFileSelect, false);
 
     //Other Buttons

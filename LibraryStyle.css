@@ -94,8 +94,27 @@ tr {
     cursor: default;
 }
 
-table tr:hover {
-background-color: #000;
+button {
+    border-radius: 12px;
+    background-color: white;
+    color: black;
+    border: 2px solid #d1d1d1;
+    padding: 4px 8px;
+    outline: 0;
+}
+
+button:hover {
+    background-color: #d1d1d1;
+    box-shadow: 0 2px 6px 0 rgba(0,0,0,0.24);
+}
+
+input[type="file"] {
+    display: none;
+}
+
+input, select {
+    border-radius: 6px;
+    padding: 4px 8px;
 }
 
 /* Popup container - can be anything you want */
@@ -105,7 +124,7 @@ background-color: #000;
 }
 
 .CellComment {
-    min-width: 150px; 
+    min-width: 150px;
     height: auto;
     visibility: hidden;
     position: absolute;
@@ -116,6 +135,9 @@ background-color: #000;
     top: 0px;
     left: 10px;
     margin: 0px;
+    display: inline-block;
+    border: 2px solid #b3b3b3;
+    border-radius: 12px;
 }
 
 .CellWithComment:hover span.CellComment {

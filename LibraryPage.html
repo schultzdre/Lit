@@ -56,7 +56,8 @@
                     <option>RIS</option>
                     <option>JSON</option>
                 </select></p>
-                <p id="LoadTitle">Upload Library:<input type="file" id="uploadButton" name="files[]" multiple/></p>
+                <p id="LoadTitle">Upload Library:<br>
+                    <button id=uploadWrap>Upload<input type="file" id="uploadButton" name="files[]" /></button></p>
             </div>
         </div>
         <hr>
@@ -66,7 +67,7 @@
             <!--<input type="text" id="SearchPubMed" size="100" onkeydown="getSearchPapers()" /><br />-->
             <input type="text" size="100" id="SearchPubMed" /><br />
 
-            Max Search Size: <input type="text" id="maxSearchSize" value="30" size="2" />
+            Max Search Size: <input type="number" id="maxSearchSize" value="30" style="width: 3em" />
             <button id ="clearSearchTableButton">Clear</button><br />
 
             Search Search: <input id="filterSearch" type="text" size="100" />
@@ -117,7 +118,7 @@
         <hr>
         <div>
             <h3>Recommendations</h3>
-            Max number of recommendations: <input type="text" id="maxRecSize" value="30" size="2" />
+            Max number of recommendations: <input type="number" id="maxRecSize" value="30" style="width: 3em"/>
             <button id="getRArticles">Get Articles</button>
             <button id="getRReviews">Get Reviews</button>
             <button id="clearRTable">Clear</button><br />

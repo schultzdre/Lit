@@ -1,22 +1,26 @@
 {
   "manifest_version": 2,
 
-  "name": "Literature Search in PubMed",
-  "description": "Given a Library of PubMed IDs, this extension allows users to find related papers",
-  "version": "1.0",
+  "name": "Lit",
+  "description": "Manage PubMed literature. Organize articles based on libraries and find related and recent articles.",
+  "version": "1.0.0",
 
   "browser_action": {
-    "default_icon": "icon.png",
+    "default_icon": "iconsmall.png",
     "default_popup": "popup.html"
   },
 
   "permissions": [
     "tabs",
     "activeTab",
-    "storage"
+    "storage",
+    "https://www.ncbi.nlm.nih.gov/*",
+    "https://eutils.ncbi.nlm.nih.gov/*"
   ],
 
-  "background": {
-    "scripts": [ "jquery-3.3.1.min.js", "colResizable-1.6.min.js", "colResizable-1.6.js", "actionButtons.js" ]
-  }
+  "content_scripts": [{
+    "js": ["modifyPMpage.js"],
+    "css": ["modifyPMpage.css"],
+    "matches": ["https://www.ncbi.nlm.nih.gov/pubmed/*"]
+  }]
 }

@@ -108,12 +108,13 @@ function sortTable(tname, cname) {
     switching = true;
     //Get table
     table = document.getElementById(tname);
-    //Delete open frames
-    nodes = table.children;
     //Set the sorting direction to ascending:
     dir = "asc";
     //Get rows
     rows = table.getElementsByTagName("TR");
+    //Delete open frames
+    var ifc = 0
+    while (ifc < rows.length) { if (/FR/g.test(rows[ifc].id)) { rows[ifc].remove() } else { ifc++} }
     //Get visible rows
     var index = [];
     for (var j = 1; j < rows.length; j++) { if (rows[j].style.display === "table-row") { index.push(j) } };
@@ -205,27 +206,21 @@ function filterTable(library, searchTerm, regexpBool, byfieldBoolID) {
 
     }
 }
-function togglePaperIFrame(nodeid) {
-    //get the node
-    console.log(nodeid)
-    var node = document.getElementById(nodeid);
-    console.log(node)
+function togglePaperIFrame(node) {
     //if frame is in
     if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {
         node.nextSibling.remove();
     } else {
         var iframe = document.createElement("iframe");
-        iframe.src = "https://www.ncbi.nlm.nih.gov/pubmed/" + /[0-9]+/g.exec(nodeid)[0];
+        iframe.src = "https://www.ncbi.nlm.nih.gov/pubmed/" + node.id.replace(/[S,L,R]/,"");
         iframe.style = "width: 100%; height: 100%;";
         var tr = document.createElement("tr");
-        tr.id = "FR" + nodeid;
+        tr.id = "FR" + node.id.replace(/[S,L,R]/,"");
         var td = document.createElement("td");
         td.colSpan = node.childElementCount;
         td.height = 800;
         td.appendChild(iframe)
         tr.appendChild(td);
-        console.log(node)
-        console.log(node.parentNode)
         if (node.nextSibling == null) {
             node.parentNode.appendChild(tr);
         } else {
@@ -370,6 +365,7 @@ function removeTermLatest() {
 function reloadLibsLatest() {
     //chrome.storage.sync.set({ "librariesLatest": [] })
     chrome.storage.sync.get(["libraries","librariesLatest"], function (item) {
+        if (item.libraries == null) {return}
         var ul = document.getElementById("liblistlist");
         while (ul.firstChild) {
             ul.removeChild(ul.firstChild);
@@ -399,7 +395,7 @@ function changeLibrariesLatest(node) {
     })
 }
 
-function getSearchPapers(term) {
+function getSearchPapers(term,pprs) {
     //Get max Search Size
     maxSearchSize = document.getElementById("maxRecSize").value;
     //Get search term
@@ -415,8 +411,7 @@ function getSearchPapers(term) {
     //Define connection
     var xhr = new XMLHttpRequest(),
         method = "GET",
-        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=" + srcterm + "&RetMax=" + maxSearchSize;
-
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=" + srcterm + "&RetMax=" + maxSearchSize + "&tool=litpmextension&email=aschultz@mdanderson.org&retmode=xml" + urlkey;
     //Define return
     xhr.onreadystatechange = function () {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
@@ -426,63 +421,56 @@ function getSearchPapers(term) {
 
             //get list of papers
             var tmp = doc.childNodes[1].children[3].children;
-            var pprs = [];
-            for (var i = 0; i < tmp.length; i++) {
-                pprs.push(tmp[i].innerHTML)
-            }
-
-            table = document.getElementById("Latest");
-            for (var i = 0; i < pprs.length; i++) {
-                addArticleToTable("Latest", pprs[i],term)
+            for (var i = 0; i < tmp.length && i < maxSearchSize; i++) {
+                pprs[0].push(tmp[i].innerHTML)
+                pprs[1].push(term)
             }
         }
     }
     xhr.open(method, url, true);
     xhr.send();
 }
-function getRecommendationList(library,thresh) {
-
-    chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
-        //get all papers
-        libPapers = item.allArticles[item.libraries.indexOf(library)]
-        //if not worth it dont bothe
-        if (thresh > libPapers.length) { return; }
-
-        //If worth it continue
-        //initialize suggestsion vector
-        var sug = [];
-        var sugcount = [];
-        //parse
-        for (var i = 0; i < libPapers.length; i++) {
-            //Define connection
-            var xhr = new XMLHttpRequest(),
-                method = "GET"
-            url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&linkname=pubmed_pubmed&id=" + libPapers[i];
-
-            //Get suggestions
-            var tmp
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                    //read the document
-                    var doc = xhr.responseXML;
-                    tmp = doc.childNodes[1].innerHTML.match(/<Id>(.*)<\/Id>/gi);
-                    tmp = tmp.map(function (e) { e = e.replace("<Id>", ""); return e; })
-                    tmp = tmp.map(function (e) { e = e.replace("</Id>", ""); return e; })
-                    for (var j = 1; j < tmp.length; j++) {
-                        var index = sug.indexOf(tmp[j])
-                        if (index == -1) {
-                            sug.push(tmp[j])
-                            sugcount.push(1)
-                        } else {
-                            sugcount[index]++
-                        }
+function getRecommendationList(libPapers,thresh,libr,tdli,pprs) {
+    //initialize suggestsion vector
+    var sug = [];
+    var sugcount = [];
+    //Make retrieve function
+    function localXML (curppr) {
+        //Define connection
+        var xhr = new XMLHttpRequest(),
+        method = "GET"
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&linkname=pubmed_pubmed&id=" + curppr + "&tool=litpmextension&email=aschultz@mdanderson.org&retmode=xml" + urlkey;
+        //Get suggestions
+        var tmp
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                //read the document
+                var doc = xhr.responseXML;
+                tmp = doc.childNodes[1].innerHTML.match(/<Id>(.*)<\/Id>/gi);
+                tmp = tmp.map(function (e) { e = e.replace("<Id>", ""); return e; })
+                tmp = tmp.map(function (e) { e = e.replace("</Id>", ""); return e; })
+                for (var j = 1; j < tmp.length; j++) {
+                    var index = sug.indexOf(tmp[j])
+                    if (index == -1) {
+                        sug.push(tmp[j])
+                        sugcount.push(1)
+                    } else {
+                        sugcount[index]++
                     }
                 }
             }
-            xhr.open(method, url, false);
-            xhr.send();
         }
+        xhr.open(method, url);
+        xhr.send();
+    }
+    //Retrieve function
+    for (var i = 0; i < libPapers.length; i++) {
+        setTimeout(localXML,tdli*i,libPapers[i])
+    }
 
+    //Add papers to library
+    function localAdd () {
+        //Sort them
         var list = [];
         for (var j = 0; j < sug.length; j++) {
             list.push({ 'pmid': sug[j], 'count': sugcount[j] });
@@ -490,33 +478,32 @@ function getRecommendationList(library,thresh) {
         list.sort(function (a, b) {
             return ((Number(a.pmid) > Number(b.pmid)) ? -1 : ((a.pmid == b.pmid) ? 0 : 1));
         });
-
-        //Add papers to library
+        //Get latest
         maxSearchSize = document.getElementById("maxRecSize").value;
         for (var k = 0; k < sug.length && k < maxSearchSize; k++) {
-            if (sugcount[k] >= thresh) {
-                addArticleToTable("Latest", list[k].pmid, library + " (" + list[k].count + ")")
+            if (list[k].count >= thresh) {
+                pprs[0].push(list[k].pmid)
+                pprs[1].push(libr + "(" + list[k].count + ")")
             }
         }
-        
-    })
+    }
+    setTimeout(localAdd,tdli*(libPapers.length+1))
 }
 function addArticleToTable(tableName, pmid, basedon) {
-    //Open connection
-    var xhr = new XMLHttpRequest(),
+    chrome.storage.sync.get(["APIkey","libraries","allArticles"], function (item) {
+        //Open connection
+        var xhr = new XMLHttpRequest(),
         method = "GET",
-        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=" + pmid + "&retmode=xml",
-        adata = [pmid],
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=" + pmid.join(",") + "&tool=litpmextension&email=aschultz@mdanderson.org&retmode=xml",
         fields = ['PMID', 'Authors', 'Title', 'JournalAbv', 'Year', 'Volume', 'Issue',
             'Page', 'Month', 'Abstract', 'JournalFull'];
-    //Execute
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            chrome.storage.sync.get(["libraries","allArticles"], function (item) {
+        if (item.APIkey != null) {url = url + "&api_key=" + item.APIkey}
+
+        //Execute
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                 //read the document
                 var doc = xhr.responseXML;
-                var tmp;
-
                 //reading function
                 function readLocalPath(xmlpath) {
                     var fld = "";
@@ -528,193 +515,232 @@ function addArticleToTable(tableName, pmid, basedon) {
                     }
                     return fld;
                 }
-
-                //See if article is recent enough
+                adata = [];
                 since = new Date(document.getElementById("sinceDate").value).getTime()
-                all = doc.evaluate('//PubmedData/History/PubMedPubDate[@PubStatus="pubmed"]', doc, null, 0, null).iterateNext();
-                if (all == null) { console.log(pmid); return;}
+                var addcount = -1;
+                for (var mn = 1; mn <= doc.evaluate('/PubmedArticleSet', doc, null, 0, null).iterateNext().childElementCount; mn++) {
+                    //See if article is recent enough
+                    all = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']//PubmedData/History/PubMedPubDate[@PubStatus="pubmed"]', doc, null, 0, null).iterateNext();
 
-                pubdate = new Date(Number(all.childNodes[1].innerHTML),
-                Number(all.childNodes[3].innerHTML) - 1,
-                Number(all.childNodes[5].innerHTML)).getTime()
-                
+                    pubdate = new Date(Number(all.childNodes[1].innerHTML),
+                    Number(all.childNodes[3].innerHTML) - 1,
+                    Number(all.childNodes[5].innerHTML)).getTime()
 
-                if (pubdate < since) { return; }
-
-                //get all the authors
-                var ln = doc.evaluate('//Author/LastName', doc, null, 0, null);
-                var fn = doc.evaluate('//Author/Initials', doc, null, 0, null);
-                var lnn = ln.iterateNext()
-                var fnn = fn.iterateNext()
-                authors = [];
-                do {
-                    var init = fnn.innerHTML
-                    var initp = init.split('').join('.') + '.';
-                    var y = lnn.innerHTML + ', ' + initp
-                    authors.push(y)
-                    lnn = ln.iterateNext()
-                    fnn = fn.iterateNext()
-                } while (lnn != null)
-                authors = authors.join('; ')
-                adata.push(authors);
-                adata.push(readLocalPath('//Article/ArticleTitle'));
-                adata.push(readLocalPath('//Article/Journal/ISOAbbreviation'));
-
-                if (readLocalPath('//Journal/JournalIssue/PubDate/Year')) {
-                    adata.push(readLocalPath('//Journal/JournalIssue/PubDate/Year'));
-                } else if (readLocalPath('//Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]) {
-                    adata.push(readLocalPath('//Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]);
-                } else {
-                    adata.push(readLocalPath('//Article/ArticleDate/Year'));
-                }
-                adata.push(readLocalPath('//Journal/JournalIssue/Volume'));
-                adata.push(readLocalPath('//Journal/JournalIssue/Issue'))
-                adata.push(readLocalPath('//Article/Pagination/MedlinePgn'));
-                adata.push(readLocalPath('//Journal/JournalIssue/PubDate/Month'))
-                adata.push(readLocalPath('//Article/Abstract/AbstractText'));
-                adata.push(readLocalPath('//Article/Journal/Title'));
-
-                //Make tr element
-                var align = ["center", "left", "left", "left", "center", "center",
-                    "center", "center", "center", "left", "left"]
-                tr = document.createElement("tr");
-                tr.id = "L" + adata[0];
-                tr.style.display = "table-row";
-
-                tr.onmouseover = function () { changeRowBackgroundColor(this); };
-                tr.onmouseout = function () { restoreRowBackgroundColor(this) };
-
-                //Make delete button
-                var td = document.createElement("td");
-                td.id = "remove";
-                var img = document.createElement("img");
-                img.src = "blueCircle.png";
-
-                td.className = "CellWithComment";
-                span = document.createElement("span");
-                span.className = "CellComment";
-                ul = document.createElement("ul")
-                for (var i = 0; i < item.libraries.length; i++) {
-                    //make node
-                    li = document.createElement("li")
-                    li.onclick = function () { addLatestPaperToLibrary(pmid.replace("L", ""), this) };
-
-                    a = document.createElement("a")
-                    a.innerHTML =  item.libraries[i]
-                    a.onmouseover = function () { changeCellBackgroundColor(this); };
-                    a.onmouseout = function () { restoreCellBackgroundColor(this) };
+                    //If not recent enough return
+                    if (pubdate < since) { continue; }
                     
+                    //Otherwise keep going
+                    adata.push([])
+                    addcount++
+                    adata[addcount].push(doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/PMID', doc, null, 0, null).iterateNext().innerHTML);
+                    //get all the authors
+                    var ln = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/AuthorList/Author/LastName', doc, null, 0, null);
+                    var fn = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/AuthorList/Author/Initials', doc, null, 0, null);
+                    var lnn = ln.iterateNext()
+                    var fnn = fn.iterateNext()
+                    authors = [];
+                    do {
+                        var init = fnn.innerHTML
+                        var initp = init.split('').join('.') + '.';
+                        var y = lnn.innerHTML + ', ' + initp
+                        authors.push(y)
+                        lnn = ln.iterateNext()
+                        fnn = fn.iterateNext()
+                    } while (lnn != null)
+                    authors = authors.join('; ')
+                    adata[addcount].push(authors);
 
-                    for (var n = 0; n < item.allArticles[i].length; n++) {
-                        if (item.allArticles[i][n] == adata[0]) {
-                            a.id = "inlib";
-                            a.style.backgroundColor = "#B3B3B3";
-                            break;
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/ArticleTitle'));
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/ISOAbbreviation'));
+
+                    if (readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year')) {
+                        adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year'));
+                    } else if (readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]) {
+                        adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]);
+                    } else {
+                        adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/ArticleDate/Year'));
+                    }
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/Volume'));
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/Issue'))
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Pagination/MedlinePgn'));
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/Month'))
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Abstract/AbstractText'));
+                    adata[addcount].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/Title'));
+
+                    //Make tr element
+                    var align = ["center", "left", "left", "left", "center", "center",
+                        "center", "center", "center", "left", "left"]
+                    tr = document.createElement("tr");
+                    tr.id = "L" + adata[addcount][0];
+                    tr.style.display = "table-row";
+
+                    tr.onmouseover = function () { changeRowBackgroundColor(this); };
+                    tr.onmouseout = function () { restoreRowBackgroundColor(this) };
+
+                    //Make delete button
+                    
+                    var td = document.createElement("td");
+                    td.id = "remove";
+                    var img = document.createElement("img");
+                    img.src = "blueCircle.png";
+
+                    td.className = "CellWithComment";
+                    span = document.createElement("span");
+                    span.className = "CellComment";
+                    ul = document.createElement("ul")
+
+                    if (item.libraries != null) {
+                        for (var i = 0; i < item.libraries.length; i++) {
+                            //make node
+                            li = document.createElement("li")
+                            li.onclick = function () { addLatestPaperToLibrary(this) };
+
+                            a = document.createElement("a")
+                            a.innerHTML =  item.libraries[i]
+                            a.onmouseover = function () { changeCellBackgroundColor(this); };
+                            a.onmouseout = function () { restoreCellBackgroundColor(this) };
+                            
+                            for (var n = 0; n < item.allArticles[i].length; n++) {
+                                if (item.allArticles[i][n] == adata[addcount][0]) {
+                                    a.id = "inlib";
+                                    a.style.backgroundColor = "#B3B3B3";
+                                    break;
+                                }
+                            }
+                            li.appendChild(a)
+                            
+                            //append
+                            if (i == 0) {
+                                ul.appendChild(li);
+                            } else {
+                                for (var j = 0; j < ul.childElementCount; j++) { if (item.libraries[i].toLowerCase() < ul.childNodes[j].innerHTML.toLowerCase()) { break; } }
+                                ul.insertBefore(li, ul.childNodes[j]);
+                            }
                         }
                     }
-                    li.appendChild(a)
-                    
-                    //append
-                    if (i == 0) {
-                        ul.appendChild(li);
-                    } else {
-                        for (var j = 0; j < ul.childElementCount; j++) { if (item.libraries[i].toLowerCase() < ul.childNodes[j].innerHTML.toLowerCase()) { break; } }
-                        ul.insertBefore(li, ul.childNodes[j]);
-                    }
-                }
-                span.appendChild(ul)
-                
-                //td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
-                td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
-                td.align = "center";
-                img.width = "10";
-                img.height = "10";
-                td.appendChild(img);
-                td.appendChild(span);
-                tr.appendChild(td);
-
-                //Make based on
-                var td = document.createElement("td");
-                td.id = "basedon";
-                td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
-                td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
-                td.align = "center";
-                td.innerHTML = basedon.replace("[Author]", "");
-                tr.appendChild(td);
-
-                //Make pub date
-                var td = document.createElement("td");
-                td.id = "pubdate";
-                td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
-                td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
-                td.align = "center";
-                td.innerHTML = all.childNodes[1].innerHTML + "/"
-                if (all.childNodes[3].innerHTML.length == 1) {
-                    td.innerHTML = td.innerHTML + "0" + all.childNodes[3].innerHTML + "/" 
-                } else {
-                    td.innerHTML = td.innerHTML + all.childNodes[3].innerHTML + "/"
-                }
-                if (all.childNodes[5].innerHTML.length == 1) {
-                    td.innerHTML = td.innerHTML + "0" + all.childNodes[5].innerHTML
-                } else {
-                    td.innerHTML = td.innerHTML + all.childNodes[5].innerHTML
-                }
-                tr.appendChild(td);
-
-                //Add other tds
-                //fields = ['PMID', 'Authors', 'Title', 'JournalAbv', 'Year', 'Volume', 'Issue', 'Page', 'Month', 'Abstract', 'JournalFull'];
-                for (var i = 0; i < adata.length; i++) {
-                    var td = document.createElement("td");
-                    td.id = fields[i];
-                    td.align = align[i];
-                    td.innerHTML = adata[i];
-                    td.style = style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px; font-size: " + document.getElementById("tableTextSize").value + "px";
+                    span.appendChild(ul)
+                        
+                    //td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
                     td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
-                    if (i == 0) {
-                        td.onclick = function () { togglePaperIFrame("L" + adata[0]) }
-                    };
-                    if (document.getElementById("hooverBool").checked) { td.title = adata[i]; }
+                    td.align = "center";
+                    img.width = "10";
+                    img.height = "10";
+                    td.appendChild(img);
+                    td.appendChild(span);
                     tr.appendChild(td);
+
+                    //Make based on
+                    var td = document.createElement("td");
+                    td.id = "basedon";
+                    td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
+                    td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
+                    td.align = "center";
+                    td.innerHTML = basedon[mn-1].replace("[Author]", "");
+                    tr.appendChild(td);
+
+                    //Make pub date
+                    var td = document.createElement("td");
+                    td.id = "pubdate";
+                    td.style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px;";
+                    td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
+                    td.align = "center";
+                    td.innerHTML = all.childNodes[1].innerHTML + "/"
+                    if (all.childNodes[3].innerHTML.length == 1) {
+                        td.innerHTML = td.innerHTML + "0" + all.childNodes[3].innerHTML + "/" 
+                    } else {
+                        td.innerHTML = td.innerHTML + all.childNodes[3].innerHTML + "/"
+                    }
+                    if (all.childNodes[5].innerHTML.length == 1) {
+                        td.innerHTML = td.innerHTML + "0" + all.childNodes[5].innerHTML
+                    } else {
+                        td.innerHTML = td.innerHTML + all.childNodes[5].innerHTML
+                    }
+                    tr.appendChild(td);
+
+                    //Add other tds
+                    for (var i = 0; i < adata[addcount].length; i++) {
+                        var td = document.createElement("td");
+                        td.id = fields[i];
+                        td.align = align[i];
+                        td.innerHTML = adata[addcount][i];
+                        td.style = style = "white-space: nowrap; text-overflow:ellipsis; overflow: hidden; max-width:1px; font-size: " + document.getElementById("tableTextSize").value + "px";
+                        td.style.backgroundColor = document.getElementById("tableBackgroundColor").value;
+                        if (i == 0) {
+                            td.onclick = function () { togglePaperIFrame(this.parentNode) }
+                        };
+                        if (document.getElementById("hooverBool").checked) { td.title = adata[addcount][i]; }
+                        tr.appendChild(td);
+                    }
+                    //Add tr to table
+                    table = document.getElementById(tableName);
+                    table.appendChild(tr);
                 }
-                //Add tr to table
-                table = document.getElementById(tableName);
-                table.appendChild(tr);
-            })
+                document.body.style.cursor = "auto"
+            }
         }
-    };
-    xhr.open(method, url);
-    xhr.send();
+        xhr.open(method, url);
+        xhr.send();
+    })
 }
 function getLatest() {
+    //If something is already gonig on stop
+    if (document.body.style.cursor == "progress") {console.log("Wait a minute"); return;}
+    //Set timeout cursor
     document.body.style.cursor = "progress"
+    //Clear current table
     clearLatestTable()
-    ul = document.getElementById("authorsList");
-    for (var i = 0; i < ul.childElementCount; i++) {
-        getSearchPapers(ul.childNodes[i].innerHTML + "[Author]")
-    }
-    ul = document.getElementById("termsList");
-    for (var i = 0; i < ul.childElementCount; i++) {
-        getSearchPapers(ul.childNodes[i].innerHTML)
-    }
-    ul = document.getElementById("liblistlist")
-    for (var i = 0; i < ul.childElementCount; i++) {
-        console.log([ul.childNodes[i].id, Number(ul.childNodes[i].childNodes[1].value)])
-        getRecommendationList(ul.childNodes[i].id, Number(ul.childNodes[i].childNodes[1].value))
-    }
-    document.body.style.cursor = "auto"
+    //Parse
+    chrome.storage.sync.get(["APIkey","libraries", "allArticles"],function (item) {
+        //Initialize variables
+        if (item.APIkey != null) {
+            urlkey = "&api_key=" + item.APIkey;
+            var tdli = 120;
+        } else {
+            urlkey = "";
+            var tdli = 400;
+        }
+        var tdl = 0;
+        var pprs = [[],[]];
+        //Parse authors list
+        ul = document.getElementById("authorsList");
+        for (var i = 0; i < ul.childElementCount; i++) {
+            setTimeout(getSearchPapers,tdl,ul.childNodes[i].innerHTML + "[Author]",pprs)
+            tdl += tdli
+        }
+        //Parse search terms
+        ul = document.getElementById("termsList");
+        for (var i = 0; i < ul.childElementCount; i++) {
+            setTimeout(getSearchPapers,tdl,ul.childNodes[i].innerHTML,pprs)
+            tdl += tdli
+        }
+        //Parse Libraries
+        ul = document.getElementById("liblistlist")
+        for (var i = 0; i < ul.childElementCount; i++) {
+            //Library index
+            libindex = item.libraries.indexOf(ul.childNodes[i].id)
+            //If not worth searching dont
+            if (Number(ul.childNodes[i].childNodes[1].value) > item.allArticles[libindex].length) {continue;}
+            //Otherwise get recommendations
+            setTimeout(getRecommendationList,tdl,item.allArticles[libindex], Number(ul.childNodes[i].childNodes[1].value), item.libraries[libindex],tdli,pprs)
+            //Update time delay
+            tdl += tdli*(item.allArticles[libindex].length+1);
+        }
+
+        setTimeout(addArticleToTable,tdl+tdli+300,"Latest",pprs[0],pprs[1])
+    })
+
 }
 
 function clearLatestTable() {
     $("#Latest tr:not(:first)").remove();
 }
-function addLatestPaperToLibrary(pmid, node) {
+function addLatestPaperToLibrary(node) {
+    pmid = node.parentNode.parentNode.parentNode.parentNode.children[3].innerHTML
     node.childNodes[0].style.backgroundColor = "#B3B3B3"
     node.childNodes[0].id = "inlib"
     chrome.storage.sync.get(["libraries", "allArticles"], function (item) {
-        index = item.libraries.indexOf(node.childNodes[0].innerHTML)
-        console.log(index)
+        index = item.libraries.indexOf(node.children[0].innerHTML)
         if (item.allArticles[index].indexOf(pmid) == -1) { item.allArticles[index].push(pmid) }
-        console.log(item.allArticles.indexOf(pmid))
         chrome.storage.sync.set({ "allArticles": item.allArticles })
     })
 }
@@ -773,10 +799,14 @@ document.getElementById("sinceDate").value = year + "-" + month + "-" + day;
 //addArticleToTable("Latest", "27897000")
 //addArticleToTable("Latest", "29377984")
 //addArticleToTable("Latest", "29241397")
-
-chrome.storage.sync.get(["libraries", "allArticles", "librariesLatest"], function (item) {
+/*
+chrome.storage.sync.get(["libraries", "allArticles", "librariesLatest","libraryTags","libraryRemoved","APIkey"], function (item) {
     console.log(item.libraries)
     console.log(item.allArticles)
     console.log(item.librariesLatest)
+    console.log(item.libraryTags)
+    console.log(item.libraryRemoved)
+    console.log(item.APIkey)
 })
+*/
 //chrome.storage.sync.remove("librariesLatest")
