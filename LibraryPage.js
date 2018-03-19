@@ -1,6 +1,6 @@
 //Library page functions
-$("#Library").colResizable({ resizeMode: 'fit' });
-$("#Search").colResizable({ resizeMode: 'fit' });
+        $("#Library").colResizable({ resizeMode: 'fit' });
+         $("#Search").colResizable({ resizeMode: 'fit' });
 $("#Recommendations").colResizable({ resizeMode: 'fit' });
 
 window.onresize = function () {
@@ -186,14 +186,27 @@ function addArticleToTableQuery(tableName, pmid, psugcount) {
                     var lnn = ln.iterateNext()
                     var fnn = fn.iterateNext()
                     authors = [];
-                    do {
-                        var init = fnn.innerHTML
-                        var initp = init.split('').join('.') + '.';
-                        var y = lnn.innerHTML + ', ' + initp
-                        authors.push(y)
-                        lnn = ln.iterateNext()
-                        fnn = fn.iterateNext()
-                    } while (lnn != null)
+                    if (lnn != null) {
+                        do {
+                            var init = fnn.innerHTML
+                            var initp = init.split('').join('.') + '.';
+                            var y = lnn.innerHTML + ', ' + initp
+                            authors.push(y)
+                            lnn = ln.iterateNext()
+                            fnn = fn.iterateNext()
+                        } while (lnn != null)
+                    }
+                    //If collective name
+                    if (authors.length == 0) {
+                        coln = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/AuthorList/Author[last()]/CollectiveName', doc, null, 0, null)
+                        tmp = coln.iterateNext()
+                        if (tmp != null) {
+                            authors.push(tmp.innerHTML);
+                        } else {
+                            authors.push("")
+                        }
+                        
+                    }
                     authors = authors.join('; ')
                     adata[mn-1].push(authors);
 
@@ -202,11 +215,13 @@ function addArticleToTableQuery(tableName, pmid, psugcount) {
 
                     if (readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year')) {
                         adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/Year'));
-                    } else if (readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]) {
-                        adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').split(" ")[0]);
+                        
+                    } else if (readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').match("[0-9]{4}")[0]) {
+                        adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/PubDate/MedlineDate').match("[0-9]{4}")[0]);
                     } else {
                         adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/ArticleDate/Year'));
                     }
+                    
                     adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/Volume'));
                     adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Journal/JournalIssue/Issue'))
                     adata[mn-1].push(readLocalPath('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/Pagination/MedlinePgn'));
@@ -228,20 +243,22 @@ function addArticleToTableQuery(tableName, pmid, psugcount) {
                     td.id = "remove";
                     var img = document.createElement("img");
 
+                    //if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
+
                     if (tableName === "Library") {
-                        td.onclick = function () { removeFromLibrary(this.parentNode) };
+                        td.onclick = function () {removeFromLibrary(this.parentNode)};
                         img.src = "blueCircle.png";
                         tr.id = "L" + adata[mn-1][0];
                     } else if (tableName === "Search") {
-                        td.onclick = function () { fromSearchToLibrary(this.parentNode)};
+                        td.onclick = function () {fromSearchToLibrary(this.parentNode)};
                         img.src = "redCircle.png";
                         tr.id = "S" + adata[mn-1][0];
                     } else if (tableName === "Recommendations") {
-                        td.onclick = function () { fromRecommendationToLibrary(this.parentNode)};
+                        td.onclick = function () {fromRecommendationToLibrary(this.parentNode)};
                         img.src = "yellowCircle.png";
                         tr.id = "R" + adata[mn-1][0];
                     } else if (tableName === "Removed") {
-                        td.onclick = function () { removeArticleFromRemoved(this.parentNode) };
+                        td.onclick = function () {removeArticleFromRemoved(this.parentNode)};
                         img.src = "blackCircle.png";
                         tr.id = "B" + adata[mn-1][0];
                     }
@@ -318,6 +335,7 @@ function addArticleToTableQuery(tableName, pmid, psugcount) {
                     table = document.getElementById(tableName);
                     table.appendChild(tr);
                 }
+                document.body.style.cursor = "auto"
             }
         };
         xhr.open(method, url, true);
@@ -326,6 +344,7 @@ function addArticleToTableQuery(tableName, pmid, psugcount) {
 }
 
 function removeFromLibrary(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
     chrome.storage.sync.get(["libraries","allArticles","libraryTags"], function(item) {
         //Library index
         libindex = Number(document.getElementById("libraryIndex").innerHTML);
@@ -339,6 +358,7 @@ function removeFromLibrary(node) {
     })
 }
 function fromSearchToLibrary(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
     chrome.storage.sync.get(["libraries","allArticles","libraryTags"], function(item) {
         //Library index
         libindex = Number(document.getElementById("libraryIndex").innerHTML);
@@ -377,6 +397,7 @@ function fromSearchToLibrary(node) {
     })
 }
 function fromRecommendationToLibrary(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
     chrome.storage.sync.get(["libraries","allArticles","libraryTags"], function(item) {
         //Library index
         libindex = Number(document.getElementById("libraryIndex").innerHTML);
@@ -391,8 +412,9 @@ function fromRecommendationToLibrary(node) {
         node.children[0].children[0].src = "blueCircle.png"
         //Change ID
         node.id.replace("R","L")
-        //Remove count
+        //Remove count and last button
         node.children[1].remove()
+        node.lastChild.remove()
         //Add tag
         var td = document.createElement("td");
         td.className = "CellWithComment";
@@ -417,6 +439,7 @@ function fromRecommendationToLibrary(node) {
     })
 }
 function removeArticleFromRemoved(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
     chrome.storage.sync.get("libraryRemoved",function(item) {
         index = Number(document.getElementById("libraryIndex").innerHTML);
         ai = item.libraryRemoved[index].indexOf(node.children[1].innerHTML);
@@ -456,6 +479,7 @@ function removeArticleFromRemoved(node) {
     })
 }
 function fromRecommendationToRemoved(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
     chrome.storage.sync.get("libraryRemoved",function(item) {
         libindex = Number(document.getElementById("libraryIndex").innerHTML);
         item.libraryRemoved[libindex].push(node.children[2].innerHTML)
@@ -508,6 +532,12 @@ function getSearchPapers() {
     elem.onkeypress = function (e) {
         if (e.keyCode == 13) {
             chrome.storage.sync.get("APIkey", function (item) {
+                 //If something is already gonig on stop
+                if (document.body.style.cursor == "progress") {console.log("Wait a minute!"); return;}
+                //Set progress
+                document.body.style.cursor = "progress"
+                setTimeout(function(){document.body.style.cursor = "auto"}, 10000) //Scapegoat
+
                 //Clear previous table
                 clearSearchTable();
 
@@ -567,6 +597,7 @@ function getSearchPapers() {
                 }
                 xhr.open(method, url, true);
                 xhr.send();
+                setTimeout(function () {document.body.style.cursor = "auto"}, 15000) //Scapegoat
             })
         }
      };
@@ -662,11 +693,16 @@ function togglePaperIFrame(node) {
     }
 }
 
+function removePaperIFrame(node) {
+    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {node.nextSibling.remove()};
+}
+
 function getRecommendationList(recterm) {
     //If something is already gonig on stop
     if (document.body.style.cursor == "progress") {console.log("Wait a minute!"); return;}
     //Set timeout cursor
     document.body.style.cursor = "progress"
+    setTimeout(function(){document.body.style.cursor = "auto"}, 10000) //Scapegoat
     clearRecommendationsTable()
     chrome.storage.sync.get("APIkey",function (item) {
         //If key is available
@@ -762,8 +798,7 @@ function getRecommendationList(recterm) {
                 addArticleToTableQuery('Recommendations',rpmids,rcounts)
             })
         }
-        setTimeout(addArticlesLocal, (tdl*libPapers.length) + 500)
-        setTimeout(function () {document.body.style.cursor = "auto"}, (tdl*libPapers.length) + 1000)
+        setTimeout(addArticlesLocal, (tdl*libPapers.length) + 1000)
     })
 }
 
@@ -877,7 +912,6 @@ function downloadCitations() {
 //Upload
 function handleFileSelect(evt) {
     var files = evt.target.files;
-    var re = new RegExp("^([0-9]*)$");
     // Loop through the FileList
     for (var i = 0, f; f = files[i]; i++) {
         // Only process text files.
@@ -890,11 +924,7 @@ function handleFileSelect(evt) {
             return function (e) {
                 //Get ids and add to library table
                 pmids = e.target.result.split("\n");
-                for (var j = 0; j < pmids.length; j++) {
-                    if (re.test(pmids[j])) {
-                        addArticleToTable("Library", pmids[j])
-                    }
-                }
+                addArticleToTableQuery("Library", pmids,Array(pmids.length).fill(""))
                 //Make sure they are added to data
                 chrome.storage.sync.get("allArticles", function (item) {
                     //See if article is in the library already

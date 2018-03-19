@@ -498,7 +498,7 @@ function addArticleToTable(tableName, pmid, basedon) {
         fields = ['PMID', 'Authors', 'Title', 'JournalAbv', 'Year', 'Volume', 'Issue',
             'Page', 'Month', 'Abstract', 'JournalFull'];
         if (item.APIkey != null) {url = url + "&api_key=" + item.APIkey}
-
+        
         //Execute
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
@@ -520,8 +520,9 @@ function addArticleToTable(tableName, pmid, basedon) {
                 var addcount = -1;
                 for (var mn = 1; mn <= doc.evaluate('/PubmedArticleSet', doc, null, 0, null).iterateNext().childElementCount; mn++) {
                     //See if article is recent enough
-                    all = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']//PubmedData/History/PubMedPubDate[@PubStatus="pubmed"]', doc, null, 0, null).iterateNext();
-
+                    all = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/PubmedData/History/PubMedPubDate[@PubStatus="pubmed"]', doc, null, 0, null).iterateNext();
+                    if (all == null) {all = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/PubmedData/History/PubMedPubDate[@PubStatus="entrez"]', doc, null, 0, null).iterateNext();}
+                    
                     pubdate = new Date(Number(all.childNodes[1].innerHTML),
                     Number(all.childNodes[3].innerHTML) - 1,
                     Number(all.childNodes[5].innerHTML)).getTime()
@@ -533,6 +534,7 @@ function addArticleToTable(tableName, pmid, basedon) {
                     adata.push([])
                     addcount++
                     adata[addcount].push(doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/PMID', doc, null, 0, null).iterateNext().innerHTML);
+
                     //get all the authors
                     var ln = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/AuthorList/Author/LastName', doc, null, 0, null);
                     var fn = doc.evaluate('/PubmedArticleSet/PubmedArticle[' + mn + ']/MedlineCitation/Article/AuthorList/Author/Initials', doc, null, 0, null);

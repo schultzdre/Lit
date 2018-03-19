@@ -7,6 +7,7 @@
 
 .CellComment {
     min-width: 150px;
+    min-width: 250px;
     visibility: hidden;
     position: absolute;
     z-index: 500;

@@ -117,6 +117,9 @@ function removeLibrary() {
 
 function editName() {
     //New Library Name
+    var d = document.getElementById("newLibraryName").value;
+    if (d == "") { return;}
+    //New Library Name
     var curlib = document.getElementById("newLibraryName").value;
     var oldlib = document.getElementById("removeOptions").value;
     //Change name in list
@@ -219,10 +222,18 @@ function handleAllFileSelect(evt) {
             chrome.storage.sync.get(["libraries", "allArticles","librariesLatest","libraryTags","libraryRemoved"], function (item) {
                 //Get ids and add to library table
                 pmids = e.target.result.split(/\r?\n/);
-                for (var j = 0; j < pmids.length; j++) { console.log(re.test(pmids[j])) }
                 for (var j = 0; j < pmids.length; j++) {
                     if (!re.test(pmids[j])) { //If it is a library
                         //Find library index
+                        if (item.libraries == null) {
+                            item.libraries = [pmids[j]];
+                            item.allArticles = [[]];
+                            item.libraryTags = [[]];
+                            item.librariesLatest = [999 + ""];
+                            item.libraryRemoved = [[]]
+                            index = 0
+                            continue
+                        }
                         index = item.libraries.indexOf(pmids[j])
                         if (index == -1) {
                             index = item.libraries.length;
@@ -384,7 +395,6 @@ chrome.storage.sync.get("APIkey",function () {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             //read the document
             var doc = xhr.responseText;
-            console.log(doc)
         APIkey = doc.match(/<th>API Key<\/th>\s*<\/tr>\s*<\/thead>\s*<tbody>\s*<tr>\s*<td>\s*<span>(.*)<\/span>\s*<span>\s*<button id="apiKeyReplaceBtn"/)
             if (APIkey == null || APIkey == "") {
                 APIkey = null;
