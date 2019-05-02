@@ -13,10 +13,13 @@
         <input type="text" id="newLibraryName" />
         <button id="addLibraryButton" >Add</button>
 
-        <h3>Remove Paper From Library</h3>
+        <h3>Remove/Edit Library</h3>
         <select id="removeOptions"></select>
         <button id="remove">Remove</button>
         <button id="edit">Edit</button>
+
+        <h3></h3>
+        <h3 style="display: inline">Latest: </h3><button id="latestButton">Latest Articles</button>
 
         <h3 id="setMenuTitle">Settings</h3>
         <div id="setMenu" style="display: none">
@@ -50,6 +53,20 @@
                     </select>
                 </p>
                 <button id="restoreSettings">Restore Settings</button>
+                <p>See Libraries in PubMed: <input id="alterPMsite" type="checkbox" value="no"/></p>
+                <p id="LoadTitle">Download Libraries:<br /><button id="downloadButton">Download</button></p>
+                <p id="LoadTitle">
+                    Download Citations:<br /><button id="downloadCitations">Download</button>
+                    <select id="citationFormat">
+                        <option>RIS</option>
+                        <option>CSL</option>
+                        <option>MEDLINE</option>
+                        <option>JSON</option>
+                    </select>
+                </p>
+                <p id="LoadTitle">Upload Libraries:<br><button id=uploadWrap>Upload<input type="file" id="uploadButton" name="files[]" /></button></p>
+                <p id="LoadTitle">API key: </p>
+                <p id="APIkey"></p>
             </div>
 
         <script src="popup.js"></script>

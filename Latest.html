@@ -1,22 +1,106 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Lit</title>
-      <link rel="stylesheet" href="LibraryStyle.css">
-  </head>
-    <body>
+    <head>
+        <title>Latest</title>
+        <link rel="stylesheet" href="LibraryStyle.css">
+        <script src="jquery-3.3.1.min.js"></script>
+        <script src="colResizable-1.6.min.js"></script>
+        <script src="colResizable-1.6.js"></script>
+    </head>
 
-        <h3>Authors</h3>
-        <ul id="authorsList"></ul>
-        <input type="text" id="newAuthorName" />
-        <button id="addAuthorButton">Add</button>
-        <select id="removeAuthorOptions"></select>
+    <body id = "pageBody">
+        <div>
+            <h1 style="display: inline">Latest Articles</h1>
+            <img src="icon-cropped.png" width="60" height="30" align="right" />
+        </div>
+        <hr>
+        <div class="dropdown">
+            <h3>Settings</h3>
+            <div class="dropdown-content">
+                <p>Table Text Size: <input id="tableTextSize" type="number" style="width: 3em" value="12" /></p>
+                <p>Table Background Color: <input id="tableBackgroundColor" value="#ffffff" type="color" /></p>
+                <p>Table Hover Color: <input id="tableHoverColor" type="color" value="#dedede" /></p>
+                <p>Background Color: <input id="backgroundColor" type="color" value="#d6d6d6" /></p>
+                <p>
+                    Font:
+                    <select id="docFont">
+                        <option>Arial</option>
+                        <option>Arial Black</option>
+                        <option>Book Antiqua</option>
+                        <option>Bookman</option>
+                        <option>Comic Sans MS</option>
+                        <option>Courier</option>
+                        <option>Courier New</option>
+                        <option>Garamond</option>
+                        <option>Georgia</option>
+                        <option>Helvetica</option>
+                        <option>Impact</option>
+                        <option>Lucida Console</option>
+                        <option>Lucida Sans Unicode</option>
+                        <option>Palatino</option>
+                        <option>Palatino Linotype</option>
+                        <option>Tahoma</option>
+                        <option>Times</option>
+                        <option>Times New Roman</option>
+                        <option>Trebuchet MS</option>
+                        <option>Verdana</option>
+                    </select>
+                </p>
+                <p>Hover Preview Mode: <input id="hooverBool" type="checkbox" value="hoover" /></p>
+                <p>Maximum Number of Recommendations: <input id="maxRecSize" type="number" style="width: 3em" value="15"/></p>
+            </div>
+        </div>
+        <hr />
+        <div>
+            <h3>Authors</h3>
+            <ul id="authorsList"></ul>
+            <input type="text" id="newAuthorName" />
+            <button id="addAuthorButton">Add</button>
+            <select id="removeAuthorOptions"></select>
+            <button id="removeAuthorButton">Remove</button>
 
-        <h3>Search Terms</h3>
-        <ul id="termsList"></ul>
-        <input type="text" id="newTermName" />
-        <button id="addTermButton">Add</button>
+            <h3>Search Terms</h3>
+            <ul id="termsList"></ul>
+            <input type="text" id="newTermName" />
+            <button id="addTermButton">Add</button>
+            <select id="removeTermOptions"></select>
+            <button id="removeTermButton">Remove</button>
+
+            <h3>Libraries</h3>
+            <div id="libList"><ul id="liblistlist"></ul></div>
+
+            <div id="try"></div>
+                
+        </div>
+        <hr>
+        <div>
+            <h3>Library</h3>
+            Get Articles Since: <input type="date" id="sinceDate" />
+            <button id="getLatestButton">Get</button>
+            <button id="clearLatestButton">Clear</button><br />
+            Search Library: <input id="filterLatest" type="text" size="100" />
+            <input id="filterLatestRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterLatestByField" type="checkbox" /> By Field <br />
+            <table id="Latest" width="100%" border="0" cellpadding="0">
+                <tr class="searchHeader">
+                    <th style="width: 2%;"></th>
+                    <th id="LatestBasedOn" style="width: 10%;">Based On</th>
+                    <th id="LatestPubDate" style="width: 6%;">Pub Date</th>
+                    <th id="LatestPMID" style="width: 6%;">PMID</th>
+                    <th id="LatestAuthors" style="width: 15%;">Authors</th>
+                    <th id="LatestTitle" style="width: 25%;">Title</th>
+                    <th id="LatestJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="LatestYear" style="width: 5%;">Year</th>
+                    <th id="LatestVolume" style="width: 5%;">Volume</th>
+                    <th id="LatestIssue" style="width: 5%;">Issue</th>
+                    <th id="LatestPage" style="width: 8%;">Page</th>
+                    <th id="LatestMonth" style="width: 4%;">Month</th>
+                    <th id="LatestAbstract" style="width: 5%;">Abstract</th>
+                    <th id="LatestJournalFull" style="width: 5%;">Journal</th>
+                </tr>
+            </table>
+        </div>
 
         <script src="Latest.js"></script>
-</body>
+    </body>
 </html>

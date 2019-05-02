@@ -10,7 +10,10 @@
 </head>
 <body id = "pageBody">
     <div>
-        <h1 style="display: inline">Library: </h1><h1 style="display: inline" id="libraryTitle"></h1>
+        <h1 style="display: inline">Library: </h1>
+        <h1 style="display: inline" id="libraryTitle"></h1>
+        <a id="libraryIndex" style="display: none"></a>
+        <img src="icon-cropped.png" width="60" height="30" align="right"/>
     </div>
     <hr>
         <div class="dropdown">
@@ -46,6 +49,16 @@
                     </select>
                 </p>
                 <p>Hover Preview Mode: <input id="hooverBool" type="checkbox" value="hoover" /></p>
+                <p id="LoadTitle">Download PMIDS:<br /><button id="downloadButton">Download</button></p>
+                <p id="LoadTitle">Download Citations:<br /><button id="downloadCitations">Download</button>
+                <select id="citationFormat">
+                    <option>RIS</option>
+                    <option>CSL</option>
+                    <option>MEDLINE</option>
+                    <option>JSON</option>
+                </select></p>
+                <p id="LoadTitle">Upload Library:<br>
+                    <button id=uploadWrap>Upload<input type="file" id="uploadButton" name="files[]" /></button></p>
             </div>
         </div>
         <hr>
@@ -55,7 +68,7 @@
             <!--<input type="text" id="SearchPubMed" size="100" onkeydown="getSearchPapers()" /><br />-->
             <input type="text" size="100" id="SearchPubMed" /><br />
 
-            Max Search Size: <input type="text" id="maxSearchSize" value="30" size="2" />
+            Max Search Size: <input type="number" id="maxSearchSize" value="30" style="width: 3em" />
             <button id ="clearSearchTableButton">Clear</button><br />
 
             Search Search: <input id="filterSearch" type="text" size="100" />
@@ -63,7 +76,7 @@
             <input id="filterSearchByField" type="checkbox" /> By Field<br />
             <p id="singleLineSearchResult" style="display: none">Some text here</p>
             <table id="Search" width="100%" border="0" cellpadding="0">
-                <tr id="searchHeader">
+                <tr class="searchHeader">
                     <th style="width: 2%;"></th>
                     <th id="SearchPMID" style="width: 6%;">PMID</th>
                     <th id="SearchAuthors" style="width: 15%;">Authors</th>
@@ -75,7 +88,7 @@
                     <th id="SearchPage" style="width: 8%;">Page</th>
                     <th id="SearchMonth" style="width: 4%;">Month</th>
                     <th id="SearchAbstract" style="width: 5%;">Abstract</th>
-                    <th id="SearchJournalFull" style="width: 5%;">Journal (Full)</th>
+                    <th id="SearchJournalFull" style="width: 5%;">Journal</th>
                 </tr>
             </table>
         </div>
@@ -86,8 +99,9 @@
             <input id="filterLibraryRegExBool" type="checkbox" /> Regular Expression
             <input id="filterLibraryByField" type="checkbox" /> By Field <br />
             <table id="Library" border="0" cellpadding="0">
-                <tr>
+                <tr class="searchHeader">
                     <th style="width: 2%;"></th>
+                    <th id="LibraryTag" style="width: 2%;">Tag</th>
                     <th id="LibraryPMID" style="width: 6%;">PMID</th>
                     <th id="LibraryAuthors" style="width: 15%;">Authors</th>
                     <th id="LibraryTitle" style="width: 25%;">Title</th>
@@ -95,17 +109,17 @@
                     <th id="LibraryYear" style="width: 5%;">Year</th>
                     <th id="LibraryVolume" style="width: 5%;">Volume</th>
                     <th id="LibraryIssue" style="width: 5%;">Issue</th>
-                    <th id="LibraryPage" style="width: 8%;">Page</th>
+                    <th id="LibraryPage" style="width: 6%;">Page</th>
                     <th id="LibraryMonth" style="width: 4%;">Month</th>
-                    <th id="LibraryAbstract" style="width: 5%;">Abstract</th>
-                    <th id="LibraryJournalFull" style="width: 5%;">Journal (Full)</th>
+                    <th id="LibraryAbstract" style="width: 4%;">Abstract</th>
+                    <th id="LibraryJournalFull" style="width: 5%;">Journal</th>
                 </tr>
             </table>
         </div>
         <hr>
         <div>
             <h3>Recommendations</h3>
-            Max number of recommendations: <input type="text" id="maxRecSize" value="30" size="2" />
+            Max number of recommendations: <input type="number" id="maxRecSize" value="30" style="width: 3em"/>
             <button id="getRArticles">Get Articles</button>
             <button id="getRReviews">Get Reviews</button>
             <button id="clearRTable">Clear</button><br />
@@ -113,8 +127,8 @@
             <input id="filterRecommendationsRegExBool" type="checkbox" /> Regular Expression
             <input id="filterRecommendationsByField" type="checkbox" /> By Field <br />
 
-            <table id="Recommendations" width="100%" border="0" cellpadding="0">
-                <tr>
+            <table id="Recommendations" border="0" cellpadding="0">
+                <tr class="searchHeader">
                     <th style="width: 2%;"></th>
                     <th id="RecommendationsCount" style="width: 2%;">Count</th>
                     <th id="RecommendationsPMID" style="width: 6%;">PMID</th>
@@ -127,10 +141,37 @@
                     <th id="RecommendationsPage" style="width: 8%;">Page</th>
                     <th id="RecommendationsMonth" style="width: 4%;">Month</th>
                     <th id="RecommendationsAbstract" style="width: 4%;">Abstract</th>
-                    <th id="RecommendationsJournalFull" style="width: 4%;">Journal (Full)</th>
+                    <th id="RecommendationsJournalFull" style="width: 4%;">Journal</th>
+                    <th style="width: 2%;"></th>
                 </tr>
             </table>
         </div>
+        <hr>
+        <button id="toggleRemoved">Show/Hide Suspended Papers</button>
+        <div id="removedDiv" style="display: none">
+            <h3>Papers Removed from Suggestions</h3>
+            Search Removed: <input id="filterRemoved" type="text" size="100" />
+            <input id="filterRemovedRegExBool" type="checkbox" /> Regular Expression
+            <input id="filterRemovedByField" type="checkbox" /> By Field <br />
+
+            <table id="Removed" width="100%" border="0" cellpadding="0">
+                <tr class="searchHeader">
+                    <th style="width: 2%;"></th>
+                    <th id="RemovedPMID" style="width: 6%;">PMID</th>
+                    <th id="RemovedAuthors" style="width: 15%;">Authors</th>
+                    <th id="RemovedTitle" style="width: 20%;">Title</th>
+                    <th id="RemovedJournalAbv" style="width: 15%;">Journal (Abv)</th>
+                    <th id="RemovedYear" style="width: 5%;">Year</th>
+                    <th id="RemovedVolume" style="width: 5%;">Volume</th>
+                    <th id="RemovedIssue" style="width: 5%;">Issue</th>
+                    <th id="RemovedPage" style="width: 8%;">Page</th>
+                    <th id="RemovedMonth" style="width: 4%;">Month</th>
+                    <th id="RemovedAbstract" style="width: 4%;">Abstract</th>
+                    <th id="RemovedJournalFull" style="width: 4%;">Journal</th>
+                </tr>
+            </table>
+        </div>
+        <hr>
 
         <script src="LibraryPage.js"></script>
         <script src="actionButtons.js"></script>
