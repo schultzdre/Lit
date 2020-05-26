@@ -207,26 +207,7 @@ function filterTable(library, searchTerm, regexpBool, byfieldBoolID) {
     }
 }
 function togglePaperIFrame(node) {
-    //if frame is in
-    if (node.nextSibling != null && /FR/g.test(node.nextSibling.id)) {
-        node.nextSibling.remove();
-    } else {
-        var iframe = document.createElement("iframe");
-        iframe.src = "https://www.ncbi.nlm.nih.gov/pubmed/" + node.id.replace(/[S,L,R]/,"");
-        iframe.style = "width: 100%; height: 100%;";
-        var tr = document.createElement("tr");
-        tr.id = "FR" + node.id.replace(/[S,L,R]/,"");
-        var td = document.createElement("td");
-        td.colSpan = node.childElementCount;
-        td.height = 800;
-        td.appendChild(iframe)
-        tr.appendChild(td);
-        if (node.nextSibling == null) {
-            node.parentNode.appendChild(tr);
-        } else {
-            node.parentNode.insertBefore(tr, node.nextSibling);
-        }
-    }
+    window.open("http://www.ncbi.nlm.nih.gov/pubmed/" + node.id.replace(/[S,L,R]/,""));
 }
 
 //Get Search Terms
