@@ -568,7 +568,7 @@ function getSearchPapers() {
                 //Define connection
                 var xhr = new XMLHttpRequest(),
                     method = "GET",
-                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=" + srcterm + "&RetMax=" + maxSearchSize + "&tool=litpmextension&email=aschultz@mdanderson.org";
+                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=" + srcterm + "&RetMax=" + maxSearchSize + "&tool=litpmextension&email=schultzdre@gmail.com";
 
                 if (item.APIkey != null) { url = url + "&api_key=" + item.APIkey }
                 //Define return
@@ -681,9 +681,8 @@ function filterTable(library, searchTerm, regexpBool, byfieldBoolID) {
 }
 
 //Insert iframe
-function togglePaperIFrame(node) {
-    window.open("http://www.ncbi.nlm.nih.gov/pubmed/" + node.id.replace(/[S,L,R]/,""));
-}
+function togglePaperIFrame(node) {window.open("https://pubmed.ncbi.nlm.nih.gov/" + node.id.replace(/[S,L,R]/,""));}
+
 
 function getRecommendationList(recterm) {
     //If something is already gonig on stop

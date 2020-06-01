@@ -3,7 +3,7 @@
 
   "name": "Lit",
   "description": "Manage PubMed literature. Organize articles based on libraries and find related and recent articles.",
-  "version": "1.0.5",
+  "version": "1.0.6",
 
   "browser_action": {
     "default_icon": "iconsmall.png",
@@ -15,12 +15,14 @@
     "activeTab",
     "storage",
     "https://www.ncbi.nlm.nih.gov/*",
-    "https://eutils.ncbi.nlm.nih.gov/*"
+    "https://eutils.ncbi.nlm.nih.gov/*",
+    "https://pubmed.ncbi.nlm.nih.gov/"
   ],
 
   "content_scripts": [{
     "js": ["modifyPMpage.js"],
     "css": ["modifyPMpage.css"],
-    "matches": ["https://www.ncbi.nlm.nih.gov/pubmed/*"]
+    "matches": ["https://pubmed.ncbi.nlm.nih.gov/*"]
   }]
 }
+// https://pubmed.ncbi.nlm.nih.gov/?term=cfDNA

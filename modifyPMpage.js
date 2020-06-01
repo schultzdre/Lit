@@ -14,7 +14,7 @@ function restoreCellBackgroundColor(cell) {
 function addLatestPaperToLibrary(node) {
     node.childNodes[0].style.backgroundColor = "#B3B3B3"
     node.childNodes[0].id = "inlib"
-    pmid = node.parentNode.parentNode.parentNode.parentNode.children[1].innerHTML
+    pmid = node.className
     chrome.storage.sync.get(["libraries", "allArticles","libraryTags"], function (item) {
         index = item.libraries.indexOf(node.childNodes[0].innerHTML)
         if (item.allArticles[index].indexOf(pmid) == -1) { 
@@ -29,22 +29,37 @@ function addLatestPaperToLibrary(node) {
 chrome.storage.sync.get(["libraries","allArticles","alterPMsite"],function(item) {
     //Get pmid node
     if (!item.alterPMsite) {return}
-    node = document.getElementsByClassName("rprtid")
+    node = document.getElementsByClassName("result-actions-bar")
+    if (node.length == 0) {
+        node = [document.getElementById("full-view-heading")]
+        paperpage = true
+    } else {
+        paperpage = false
+    }
     for(var k = 0; k < node.length; k++) {
         if (node[k].childElementCount == 1) {continue;}
         //Make menu
-        var dt = document.createElement("dt");
+        var dt = document.createElement("div");
         dt.className = "CellWithComment";
         dt.innerHTML = "Lit";
+        dt.style.display = "inline";
+        dt.style.color = "#5b616b"
         span = document.createElement("span");
         span.className = "CellComment";
         ul = document.createElement("ul")
+
+        if (paperpage) {
+            pmid = node[k].getElementsByClassName("current-id")[0].innerHTML
+        } else {
+            pmid = node[k].parentNode.children[0].children[0].getAttribute("data-ga-label")
+        }
 
         if (item.libraries != null) {
             for (var i = 0; i < item.libraries.length; i++) {
                 //make node
                 li = document.createElement("li")
                 li.onclick = function () { addLatestPaperToLibrary(this) };
+                li.className = pmid;
 
                 a = document.createElement("a")
                 a.innerHTML =  item.libraries[i]
@@ -53,7 +68,7 @@ chrome.storage.sync.get(["libraries","allArticles","alterPMsite"],function(item)
                 a.onmouseout = function () { restoreCellBackgroundColor(this) };
                 
                 for (var n = 0; n < item.allArticles[i].length; n++) {
-                    if (item.allArticles[i][n] == node[k].children[1].innerHTML) {
+                    if (item.allArticles[i][n] == pmid) {
                         a.id = "inlib";
                         a.style.backgroundColor = "#B3B3B3";
                         break;
